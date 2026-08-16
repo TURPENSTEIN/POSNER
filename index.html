@@ -432,13 +432,12 @@
 </head>
 <body>
 
-    <!-- Dedicated flash overlay for correct/wrong feedback -->
     <div id="flash-overlay"></div>
 
     <header>
         <div class="logo" id="nav-logo">Semantic LTMR Pro</div>
         <div class="stats-bar">
-            <div class="stat-item">Level: <span id="stat-level">1.0</span></div>
+            <div class="stat-item">Level: <span id="stat-level">1</span></div>
             <div class="stat-item">Accuracy: <span id="stat-acc">100%</span></div>
             <div class="stat-item">Trial: <span id="stat-trial">0/32</span></div>
         </div>
@@ -466,7 +465,7 @@
                     </div>
                     <div class="dash-card">
                         <h3>Max Level Achieved</h3>
-                        <div class="dash-card-val"><div class="stat-val" id="dash-level">1.0</div></div>
+                        <div class="dash-card-val"><div class="stat-val" id="dash-level">1</div></div>
                     </div>
                     <div class="dash-card">
                         <h3>Total Trials Completed</h3>
@@ -532,9 +531,9 @@
         <div class="panel-content">
             <!-- Training Mode -->
             <div class="setting-card">
-                <label>Adaptive Pacing Mode</label>
+                <label>Pacing Mode</label>
                 <select id="setting-training-mode">
-                    <option value="hyper">Hyper-Adaptive (Target ~85% Accuracy)</option>
+                    <option value="adaptive">Adaptive</option>
                     <option value="manual">Manual (Fixed level)</option>
                 </select>
             </div>
@@ -581,8 +580,8 @@
 
             <!-- Custom Word Pairs -->
             <div class="setting-card">
-                <label>Custom Word Pairs (JSON format: [{"l":"A","r":"B","rule":"meaning","isSame":true}])</label>
-                <textarea id="setting-custom-pairs" placeholder="Leave empty for standard generator"></textarea>
+                <label>Custom Word Pairs (JSON format)</label>
+                <textarea id="setting-custom-pairs" placeholder='[{"l":"A","r":"B","rule":"meaning","isSame":true}]'></textarea>
             </div>
 
             <!-- Rule Screen Delay -->
@@ -598,7 +597,7 @@
 
             <!-- Manual Level Selection -->
             <div class="setting-card" id="manual-level-card">
-                <label>Starting / Fixed Level (1.0 - 10.0)</label>
+                <label>Starting / Fixed Level (1 - 10)</label>
                 <div class="level-grid" id="level-grid"></div>
             </div>
 
@@ -619,15 +618,15 @@
 
     <script>
         const state = {
-            level: 1.0,
-            maxLevelReached: 1.0,
+            level: 1,
+            maxLevelReached: 1,
             correctCount: 0,
             totalCount: 0,
+            consecutiveErrors: 0,
             currentTrialIndex: 0,
             maxTrials: 32,
             phase: 'dashboard',
             
-            // New state variables for Exploit & Pause features
             inputLocked: false,
             isPaused: false,
             lastPhase: null,
@@ -636,14 +635,13 @@
             
             autoAdvanceTimer: null,
             trialTimeout: null,
-            recentAccWindow: [],
             lifetimeStats: {
                 totalSessions: 0,
                 totalTrials: 0,
                 totalCorrect: 0
             },
             settings: {
-                trainingMode: 'hyper',
+                trainingMode: 'adaptive',
                 classicMode: true,
                 multiMode: true,
                 ufoiv: false,
@@ -652,7 +650,7 @@
                 language: 'en',
                 customPairsJson: '',
                 autoAdvanceDelay: 1.25,
-                fixedLevel: 1.0,
+                fixedLevel: 1,
                 sameKey: 'KeyS',
                 sameKeyLabel: 'S',
                 diffKey: 'KeyD',
@@ -747,7 +745,7 @@
 
         function buildLevelGrid() {
             levelGrid.innerHTML = '';
-            const levels = [1, 2, 3, 4, 5, 6, 7, 8, 8.5, 9, 9.2, 9.5, 9.7, 10];
+            const levels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
             levels.forEach(lvl => {
                 const btn = document.createElement('button');
                 btn.className = `level-btn ${state.settings.fixedLevel === lvl ? 'active' : ''}`;
@@ -756,7 +754,7 @@
                     state.settings.fixedLevel = lvl;
                     if (state.settings.trainingMode === 'manual') {
                         state.level = lvl;
-                        statLevel.textContent = lvl.toFixed(1);
+                        statLevel.textContent = lvl;
                     }
                     saveStorage();
                     buildLevelGrid();
@@ -769,6 +767,12 @@
             const saved = localStorage.getItem('sem_ltmr_settings');
             if (saved) {
                 state.settings = JSON.parse(saved);
+                
+                // Backwards compatibility handling
+                if(state.settings.trainingMode === 'hyper') {
+                    state.settings.trainingMode = 'adaptive';
+                }
+                
                 updateKeybindLabels();
                 settingTrainingMode.value = state.settings.trainingMode;
                 settingClassicMode.checked = state.settings.classicMode;
@@ -789,9 +793,9 @@
             }
             const savedMax = localStorage.getItem('sem_ltmr_maxlevel');
             if (savedMax) {
-                state.maxLevelReached = parseFloat(savedMax);
+                state.maxLevelReached = parseInt(savedMax, 10) || 1;
             }
-            statLevel.textContent = state.level.toFixed(1);
+            statLevel.textContent = state.level;
             updateDashboardDisplay();
             buildLevelGrid();
         }
@@ -806,7 +810,7 @@
             dashSessions.textContent = state.lifetimeStats.totalSessions;
             const lifetimeAcc = state.lifetimeStats.totalTrials > 0 ? Math.round((state.lifetimeStats.totalCorrect / state.lifetimeStats.totalTrials) * 100) : 0;
             dashAccuracy.textContent = `${lifetimeAcc}%`;
-            dashLevel.textContent = state.maxLevelReached.toFixed(1);
+            dashLevel.textContent = state.maxLevelReached;
             dashTrials.textContent = state.lifetimeStats.totalTrials;
         }
 
@@ -817,16 +821,13 @@
             bindDiffBtn.textContent = state.settings.diffKeyLabel;
         }
 
-        // Pause/Resume Logic
         function togglePause() {
             if (state.phase === 'dashboard' || state.phase === 'welcome') return;
 
             if (!state.isPaused) {
-                // Execute Pause
                 state.isPaused = true;
                 clearTimers();
                 
-                // Calculate remaining time if we are in stimulus phase
                 if (state.phase === 'stimulus') {
                     const elapsed = Date.now() - state.trialStartTime;
                     state.trialTotalTime -= elapsed;
@@ -840,7 +841,6 @@
                 pauseScreen.classList.remove('hidden');
                 btnPause.textContent = 'Resume';
             } else {
-                // Execute Resume
                 state.isPaused = false;
                 pauseScreen.classList.add('hidden');
                 btnPause.textContent = 'Pause';
@@ -857,7 +857,6 @@
                 } else if (state.phase === 'stimulus') {
                     trainingContainer.classList.remove('hidden');
                     state.trialStartTime = Date.now();
-                    // Provide a generous buffer (min 800ms) when unpausing directly into a stimulus
                     const resumeTime = Math.max(state.trialTotalTime, 800);
                     state.trialTimeout = setTimeout(() => {
                         if (state.phase === 'stimulus') handleUserChoice(null);
@@ -900,7 +899,6 @@
                 return;
             }
 
-            // Global Pause hotkey
             if (e.code === 'KeyP' || e.code === 'Escape') {
                 if (state.phase === 'rule' || state.phase === 'stimulus' || state.phase === 'paused') {
                     e.preventDefault();
@@ -950,7 +948,7 @@
             if (e.target.value === 'manual') {
                 state.level = state.settings.fixedLevel;
             }
-            statLevel.textContent = state.level.toFixed(1);
+            statLevel.textContent = state.level;
             saveStorage();
         });
 
@@ -969,7 +967,7 @@
             state.isPaused = false;
             
             dashboardScreen.classList.remove('hidden');
-            btnPause.classList.add('hidden'); // Hide pause button outside of sessions
+            btnPause.classList.add('hidden');
             welcomeScreen.classList.add('hidden');
             ruleScreen.classList.add('hidden');
             pauseScreen.classList.add('hidden');
@@ -997,19 +995,19 @@
             state.currentTrialIndex = 0;
             state.correctCount = 0;
             state.totalCount = 0;
-            state.recentAccWindow = [];
+            state.consecutiveErrors = 0;
             state.isPaused = false;
             
             if (state.settings.trainingMode === 'manual') {
                 state.level = state.settings.fixedLevel;
-            } else {
-                state.level = 1.0;
             }
-            statLevel.textContent = state.level.toFixed(1);
+            // In adaptive mode, we retain the state.level carried over from previous rounds
+            
+            statLevel.textContent = state.level;
             
             welcomeScreen.classList.add('hidden');
             summaryModal.classList.add('hidden');
-            btnPause.classList.remove('hidden'); // Show pause button now that session started
+            btnPause.classList.remove('hidden'); 
             
             nextTrial();
         }
@@ -1068,7 +1066,7 @@
         function advanceToStimulus() {
             clearTimeout(state.autoAdvanceTimer);
             state.phase = 'stimulus';
-            state.inputLocked = false; // Unlock inputs for the new stimulus
+            state.inputLocked = false; 
             
             ruleScreen.classList.add('hidden');
             trainingContainer.classList.remove('hidden');
@@ -1078,7 +1076,6 @@
             stimulusLeft.textContent = state.currentTrialData.left;
             stimulusRight.textContent = state.currentTrialData.right;
 
-            // Apply UFOV / Peripheral placement if enabled
             if (state.settings.ufoiv) {
                 stimulusLeft.style.position = 'absolute';
                 stimulusRight.style.position = 'absolute';
@@ -1098,7 +1095,6 @@
                 stimulusRight.style.top = 'auto';
             }
 
-            // Apply red hue glow if inverted rule applies to stimulus formatting
             if (state.currentTrialData.isInverted) {
                 stimulusLeft.classList.add('inverted-rule');
                 stimulusRight.classList.add('inverted-rule');
@@ -1107,8 +1103,9 @@
                 stimulusRight.classList.remove('inverted-rule');
             }
 
-            const baseTime = 4500 - (Math.pow(state.level, 1.15) * 310);
-            state.trialTotalTime = Math.max(1100, Math.round(baseTime));
+            // aPOSNER Time Limit Calculation: Level 1 = 1200ms -> Level 10 = 300ms
+            const baseTime = 1300 - (state.level * 100);
+            state.trialTotalTime = Math.max(300, Math.round(baseTime));
             state.trialStartTime = Date.now();
             
             state.trialTimeout = setTimeout(() => {
@@ -1246,12 +1243,9 @@
         }
 
         function handleUserChoice(userGuessedSame) {
-            // Lockout check: If not in stimulus phase, paused, or input is already locked, ignore
             if (state.phase !== 'stimulus' || state.isPaused || state.inputLocked) return;
             
-            // Immediately lock inputs so rapid clicking cannot queue up more actions
             state.inputLocked = true;
-            
             clearTimers();
 
             const timedOut = (userGuessedSame === null);
@@ -1263,14 +1257,14 @@
             const correct = !timedOut && (userGuessedSame === targetIsSame);
 
             state.totalCount++;
-            state.recentAccWindow.push(correct ? 1 : 0);
-            if (state.recentAccWindow.length > 10) state.recentAccWindow.shift();
 
             if (correct) {
                 state.correctCount++;
+                state.consecutiveErrors = 0;
                 playTone(true);
                 triggerVisualFlash(true);
             } else {
+                state.consecutiveErrors++;
                 playTone(false);
                 triggerVisualFlash(false);
             }
@@ -1278,20 +1272,11 @@
             const accuracy = Math.round((state.correctCount / state.totalCount) * 100);
             statAcc.textContent = `${accuracy}%`;
 
-            if (state.settings.trainingMode === 'hyper') {
-                const recentSum = state.recentAccWindow.reduce((a, b) => a + b, 0);
-                const recentRate = state.recentAccWindow.length > 0 ? (recentSum / state.recentAccWindow.length) : 0.85;
-                
-                let step = state.level >= 8 ? 0.05 : 0.15;
-                if (recentRate >= 0.85 && state.level < 10) {
-                    state.level = Math.min(10, +(state.level + step).toFixed(2));
-                } else if (recentRate < 0.75 && state.level > 1) {
-                    state.level = Math.max(1.0, +(state.level - (step * 1.5)).toFixed(2));
-                }
-                if (state.level > state.maxLevelReached) {
-                    state.maxLevelReached = state.level;
-                }
-                statLevel.textContent = state.level.toFixed(1);
+            // Immediate drop-down logic if 3 errors in a row
+            if (state.settings.trainingMode === 'adaptive' && state.consecutiveErrors >= 3) {
+                state.level = Math.max(1, state.level - 1);
+                state.consecutiveErrors = 0;
+                statLevel.textContent = state.level;
             }
 
             setTimeout(() => {
@@ -1308,14 +1293,27 @@
             btnPause.classList.add('hidden');
             trainingContainer.classList.add('hidden');
 
+            const errors = state.totalCount - state.correctCount;
+            let levelMessage = `Current Level: <strong>${state.level}</strong>`;
+
+            // Round-based Level Up logic
+            if (state.settings.trainingMode === 'adaptive') {
+                if (errors <= 3 && state.level < 10) {
+                    state.level++;
+                    levelMessage = `Current Level: <strong>${state.level}</strong> <span style="color:var(--success); font-weight:bold;">(Level Up!)</span>`;
+                }
+            }
+
+            if (state.level > state.maxLevelReached) state.maxLevelReached = state.level;
+            
             state.lifetimeStats.totalSessions++;
             state.lifetimeStats.totalTrials += state.totalCount;
             state.lifetimeStats.totalCorrect += state.correctCount;
-            if (state.level > state.maxLevelReached) state.maxLevelReached = state.level;
+            
             saveStorage();
 
             const finalAcc = state.totalCount > 0 ? Math.round((state.correctCount / state.totalCount) * 100) : 0;
-            summaryStatsText.innerHTML = `Session complete!<br><br>Accuracy: <strong>${finalAcc}%</strong><br>Current Level: <strong>${state.level.toFixed(1)}</strong><br>Max Level Reached: <strong>${state.maxLevelReached.toFixed(1)}</strong>`;
+            summaryStatsText.innerHTML = `Session complete!<br><br>Accuracy: <strong>${finalAcc}%</strong> (${errors} errors)<br>${levelMessage}<br>Max Level Reached: <strong>${state.maxLevelReached}</strong>`;
             summaryModal.classList.remove('hidden');
         }
 
