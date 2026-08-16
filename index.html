@@ -277,6 +277,7 @@
             flex-direction: column;
             gap: 1.25rem;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
         }
 
         .overlay-panel {
@@ -522,7 +523,7 @@
 
     <!-- Post-Session Summary Modal Popup -->
     <div class="modal-overlay hidden" id="summary-modal">
-        <div class="modal-content">
+        <div class="modal-content" id="summary-modal-content">
             <h1>Session Complete!</h1>
             <p id="summary-stats-text">Great execution on high-speed semantic retrieval.</p>
             <button class="primary" id="btn-modal-close">Return to Dashboard</button>
@@ -558,7 +559,7 @@
                 </div>
                 <div class="checkbox-row" style="margin-top: 0.5rem;">
                     <input type="checkbox" id="setting-affective-mode">
-                    <span>Affective / Emotional Mode (Emotional interference & valence)</span>
+                    <span>Affective Mode (Emotional interference & valence)</span>
                 </div>
             </div>
 
@@ -790,6 +791,7 @@
         const ruleScreen = document.getElementById('rule-screen');
         const trainingContainer = document.getElementById('training-container');
         const summaryModal = document.getElementById('summary-modal');
+        const summaryModalContent = document.getElementById('summary-modal-content');
         const pauseScreen = document.getElementById('pause-screen');
 
         const navLogo = document.getElementById('nav-logo');
@@ -865,9 +867,12 @@
             levelGrid.innerHTML = '';
             ALL_LEVELS.forEach(lvl => {
                 const btn = document.createElement('button');
-                btn.className = `level-btn ${state.level === lvl ? 'active' : ''}`;
+                btn.className = `level-btn ${(state.settings.trainingMode === 'manual' ? state.settings.fixedLevel : state.level) === lvl ? 'active' : ''}`;
                 btn.textContent = lvl;
                 btn.addEventListener('click', () => {
+                    if (state.settings.trainingMode === 'manual') {
+                        state.settings.fixedLevel = lvl;
+                    }
                     state.level = lvl;
                     statLevel.textContent = lvl;
                     saveStorage();
@@ -892,8 +897,6 @@
                 settingLanguage.value = state.settings.language;
                 settingCustomPairs.value = state.settings.customPairsJson || '';
                 settingAutoAdvance.value = state.settings.autoAdvanceDelay;
-                
-                state.level = state.settings.fixedLevel || 1;
             }
             const savedStats = localStorage.getItem('sem_ltmr_stats');
             if (savedStats) {
@@ -905,6 +908,10 @@
             const savedMax = localStorage.getItem('sem_ltmr_maxlevel');
             if (savedMax) {
                 state.maxLevelReached = parseFloat(savedMax) || 1;
+            }
+
+            if (state.settings.trainingMode === 'manual') {
+                state.level = state.settings.fixedLevel || 1;
             }
             statLevel.textContent = state.level;
             updateDashboardDisplay();
@@ -992,6 +999,14 @@
         });
 
         window.addEventListener('keydown', (e) => {
+            if (!summaryModal.classList.contains('hidden')) {
+                if (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') {
+                    e.preventDefault();
+                    dismissSummary();
+                    return;
+                }
+            }
+
             if (state.listeningForBinding) {
                 e.preventDefault();
                 const action = state.listeningForBinding;
@@ -1064,6 +1079,7 @@
             }
             statLevel.textContent = state.level;
             saveStorage();
+            buildLevelGrid();
         });
 
         settingClassicMode.addEventListener('change', (e) => { state.settings.classicMode = e.target.checked; saveStorage(); });
@@ -1094,9 +1110,24 @@
 
         startBtn.addEventListener('click', beginTrialsSequence);
         startFromDashBtn.addEventListener('click', startSession);
-        btnModalClose.addEventListener('click', () => {
+        
+        function dismissSummary() {
             summaryModal.classList.add('hidden');
             showDashboard();
+        }
+
+        btnModalClose.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dismissSummary();
+        });
+
+        summaryModal.addEventListener('click', () => {
+            dismissSummary();
+        });
+
+        summaryModalContent.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dismissSummary();
         });
 
         function startSession() {
