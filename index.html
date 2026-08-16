@@ -3,494 +3,1506 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>aPOSNER - Adaptive Posner Task</title>
+    <title>Semantic LTMR - Posner Mixed Task</title>
     <style>
         :root {
-            --bg-color: #0f1015;
-            --card-bg: #181922;
-            --text-color: #f0f0f5;
-            --text-muted: #8b9bb4;
-            --accent-color: #4f46e5;
-            --accent-hover: #6366f1;
-            --success-color: #10b981;
-            --error-color: #ef4444;
-            --border-color: #2d3142;
+            --bg-color: #0f172a;
+            --surface-color: #1e293b;
+            --surface-hover: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --border: #334155;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
         }
 
         body {
             background-color: var(--bg-color);
-            color: var(--text-color);
+            color: var(--text-main);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        /* Dedicated Flash Overlay for distinct colors */
+        #flash-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
+        }
+
+        #flash-overlay.flash-correct {
+            background-color: rgba(34, 197, 94, 0.35);
+            opacity: 1;
+            transition: none; 
+        }
+
+        #flash-overlay.flash-wrong {
+            background-color: rgba(239, 68, 68, 0.4);
+            opacity: 1;
+            transition: none;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            overflow: hidden;
+            padding: 1rem 2rem;
+            background-color: var(--surface-color);
+            border-bottom: 1px solid var(--border);
         }
 
-        .container {
-            width: 100%;
-            max-width: 600px;
-            padding: 2rem;
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            text-align: center;
-        }
-
-        h1 {
-            font-size: 1.75rem;
-            margin-bottom: 0.5rem;
+        .logo {
+            font-size: 1.25rem;
             font-weight: 700;
+            color: var(--accent);
+            cursor: pointer;
         }
 
-        p.subtitle {
-            color: var(--text-muted);
-            margin-bottom: 1.5rem;
+        .stats-bar {
+            display: flex;
+            gap: 1.5rem;
             font-size: 0.9rem;
-        }
-
-        .controls-group {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            text-align: left;
-        }
-
-        label {
-            font-size: 0.85rem;
             color: var(--text-muted);
-            display: flex;
-            flex-direction: column;
-            gap: 0.3rem;
         }
 
-        select, input[type="checkbox"] {
-            accent-color: var(--accent-color);
-        }
-
-        select {
-            padding: 0.6rem;
-            background: var(--bg-color);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            border-radius: 6px;
-            font-size: 1rem;
-        }
-
-        .checkbox-row {
-            flex-direction: row !important;
-            align-items: center;
-            gap: 0.5rem !important;
-            cursor: pointer;
-            color: var(--text-color) !important;
-        }
-
-        .primary-btn {
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            font-size: 1rem;
+        .stat-item span {
+            color: var(--text-main);
             font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.2s;
-            width: 100%;
         }
 
-        .primary-btn:hover {
+        .nav-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        button {
+            background-color: var(--surface-hover);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--border);
+        }
+
+        button.primary {
+            background-color: var(--accent);
+            color: #0f172a;
+            border: none;
+        }
+
+        button.primary:hover {
             background-color: var(--accent-hover);
         }
 
-        /* Task Screen Grid */
-        #taskScreen {
-            display: none;
-            width: 100vw;
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background-color: var(--bg-color);
+        main {
+            flex: 1;
+            display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .cue-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 120px);
-            grid-template-rows: 120px;
-            gap: 20px;
             align-items: center;
             justify-content: center;
+            padding: 2rem;
+            position: relative;
         }
 
-        .box {
-            width: 120px;
-            height: 120px;
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
+        .stage {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            width: 100%;
+            max-width: 750px;
+            min-height: 480px;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            font-size: 2.5rem;
-            background: rgba(255,255,255,0.02);
-            transition: border-color 0.1s, background 0.1s;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
         }
 
-        .fixation {
-            font-size: 2rem;
+        .cue-text {
+            font-size: 1.25rem;
+            color: var(--accent);
+            margin-bottom: 2.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .stimulus-container {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+            position: relative;
+            width: 100%;
+            justify-content: center;
+            min-height: 120px;
+            align-items: center;
+        }
+
+        .stimulus-box {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: var(--bg-color);
+            padding: 1.25rem 2rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            min-width: 140px;
+            text-align: center;
+            transition: transform 0.1s;
+        }
+
+        .stimulus-box.inverted-rule {
+            border-color: var(--danger);
+            color: var(--danger);
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .stimulus-box.affective-distractor {
+            border-color: #f43f5e;
+            color: #f43f5e;
+            background-color: rgba(244, 63, 94, 0.08);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .action-buttons button {
+            flex: 1;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        /* Screen States */
+        .screen {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            align-items: center;
+            width: 100%;
+        }
+
+        .screen h1 {
+            font-size: 1.75rem;
+        }
+
+        .screen p {
             color: var(--text-muted);
+            line-height: 1.5;
+            font-size: 0.95rem;
+            max-width: 520px;
         }
 
-        /* Modal Overlay */
-        .modal {
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            width: 100%;
+            margin: 1rem 0;
+        }
+
+        .dash-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            text-align: left;
+        }
+
+        .dash-card h3 {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .dash-card .stat-val {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        /* Modals & Panels */
+        .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(10, 10, 15, 0.85);
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            z-index: 200;
+        }
+
+        .modal-content {
+            background: var(--surface-color);
+            border: 1px solid var(--border);
+            padding: 2.5rem;
+            border-radius: 1rem;
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+        }
+
+        .overlay-panel {
+            position: fixed;
+            top: 0;
+            right: -480px;
+            width: 480px;
+            height: 100%;
+            background-color: var(--surface-color);
+            border-left: 1px solid var(--border);
+            box-shadow: -5px 0 25px rgba(0,0,0,0.5);
+            transition: right 0.3s ease;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .overlay-panel.open {
+            right: 0;
+        }
+
+        .panel-header {
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-content {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .setting-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .setting-card label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .checkbox-row input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .level-btn {
+            background: var(--surface-color);
+            border: 1px solid var(--border);
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .level-btn.active {
+            background: var(--accent);
+            color: #0f172a;
+            border-color: var(--accent);
+        }
+
+        .keybind-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--surface-color);
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .key-capture-btn {
+            background: var(--surface-hover);
+            border: 1px solid var(--border);
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.25rem;
+            color: var(--accent);
+            font-weight: 600;
+            cursor: pointer;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .key-capture-btn.listening {
+            background: var(--accent);
+            color: #0f172a;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .trial-counter {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        select, textarea {
+            background: var(--surface-color);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            width: 100%;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+            font-family: monospace;
+            font-size: 0.85rem;
         }
 
         .hidden {
             display: none !important;
         }
-
-        .modal-content {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            padding: 2rem;
-            border-radius: 12px;
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-        }
-
-        .modal-content h2 {
-            margin-bottom: 1rem;
-        }
-
-        #summaryStats {
-            margin-bottom: 1.5rem;
-            text-align: left;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            color: var(--text-muted);
-        }
-
-        #summaryStats span {
-            color: var(--text-color);
-            font-weight: 600;
-        }
-
-        .modal-controls-row {
-            margin-bottom: 1.2rem;
-            text-align: left;
-        }
-
-        .flash-correct {
-            border-color: var(--success-color) !important;
-            background: rgba(16, 185, 129, 0.1) !important;
-        }
-
-        .flash-error {
-            border-color: var(--error-color) !important;
-            background: rgba(239, 68, 68, 0.1) !important;
-        }
     </style>
 </head>
 <body>
 
-    <!-- Main Dashboard Menu -->
-    <div class="container" id="menuScreen">
-        <h1>aPOSNER Task</h1>
-        <p class="subtitle">Adaptive Posner Cueing & Attention Training</p>
-        
-        <div class="controls-group">
-            <label>Task Mode
-                <select id="taskMode">
-                    <option value="classic">Classic Posner</option>
-                    <option value="affective">Affective Interference Mode</option>
-                </select>
-            </label>
+    <div id="flash-overlay"></div>
 
-            <label>Trials per Session
-                <select id="trialCount">
-                    <option value="10">10 Trials (Quick Test)</option>
-                    <option value="20" selected>20 Trials</option>
-                    <option value="40">40 Trials</option>
-                </select>
-            </label>
-
-            <label class="checkbox-row">
-                <input type="checkbox" id="menuContinuousToggle" checked> Continuous Flow Mode (Auto-advance)
-            </label>
+    <header>
+        <div class="logo" id="nav-logo">Semantic LTMR</div>
+        <div class="stats-bar">
+            <div class="stat-item">Today: <span id="stat-daily-sessions">0</span></div>
+            <div class="stat-item">Level: <span id="stat-level">1</span></div>
+            <div class="stat-item">Accuracy: <span id="stat-acc">100%</span></div>
+            <div class="stat-item">Trial: <span id="stat-trial">0/32</span></div>
         </div>
-
-        <button class="primary-btn" id="startBtn">Start Training Session</button>
-    </div>
-
-    <!-- Active Task Execution Screen -->
-    <div id="taskScreen">
-        <div class="cue-grid">
-            <div class="box" id="leftBox"></div>
-            <div class="box" id="centerBox"><span class="fixation">+</span></div>
-            <div class="box" id="rightBox"></div>
+        <div class="nav-buttons">
+            <button id="btn-pause" class="hidden">Pause</button>
+            <button id="btn-dashboard">Dashboard</button>
+            <button id="btn-settings">Settings</button>
         </div>
-    </div>
+    </header>
 
-    <!-- Session Summary Modal -->
-    <div id="summaryModal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Session Complete</h2>
-            <div id="summaryStats"></div>
-            
-            <div class="modal-controls-row">
-                <label class="checkbox-row">
-                    <input type="checkbox" id="continuousModeToggle" checked> Continuous Flow Mode
-                </label>
+    <main>
+        <div class="stage" id="game-stage">
+            <!-- Dashboard Screen -->
+            <div class="screen" id="dashboard-screen">
+                <h1>Semantic Long-Term Memory & Attention Switching</h1>
+                <p>Train rapid semantic lookup, inhibition control, and peripheral vigilance without sub-vocalization crutches.</p>
+                <div class="dashboard-grid">
+                    <div class="dash-card">
+                        <h3>Today's Sessions</h3>
+                        <div class="stat-val" id="dash-daily-sessions">0</div>
+                    </div>
+                    <div class="dash-card">
+                        <h3>Total Sessions</h3>
+                        <div class="stat-val" id="dash-sessions">0</div>
+                    </div>
+                    <div class="dash-card">
+                        <h3>Lifetime Accuracy</h3>
+                        <div class="stat-val" id="dash-accuracy">0%</div>
+                    </div>
+                    <div class="dash-card">
+                        <h3>Max Level Achieved</h3>
+                        <div class="dash-card-val"><div class="stat-val" id="dash-level">1</div></div>
+                    </div>
+                </div>
+                <button class="primary" id="btn-start-from-dash" style="padding: 0.75rem 2rem; font-size: 1rem;">Start Session (Press Spacebar)</button>
             </div>
 
-            <button id="btnModalClose" class="primary-btn">Continue to Next Session</button>
+            <!-- Welcome Screen -->
+            <div class="screen hidden" id="welcome-screen">
+                <h1>Posner Mixed Task</h1>
+                <p>Rapidly judge stimulus relations according to the active rule. Pacing is continuous to force instant retrieval intuition. Misses or wrong answers incur a red error flash.</p>
+                <button class="primary" id="btn-start" style="padding: 0.75rem 2rem; font-size: 1rem;">Start Session (Press Space)</button>
+            </div>
+
+            <!-- Pause Screen -->
+            <div class="screen hidden" id="pause-screen">
+                <h1>Session Paused</h1>
+                <p>Take a breath. Ready to jump back into the flow?</p>
+                <button class="primary" id="btn-resume" style="padding: 0.75rem 2rem; font-size: 1rem;">Resume Session (Press P / Esc)</button>
+            </div>
+
+            <!-- Rule / Fixation Screen -->
+            <div class="screen hidden" id="rule-screen">
+                <div class="trial-counter" id="rule-trial-counter">Trial 1 of 32</div>
+                <div class="cue-text" id="rule-cue-box" style="font-size: 1.75rem;">Rule: MEANING</div>
+                <p id="rule-instruction-hint">Get ready...</p>
+                <button id="btn-ready" class="hidden">Press Space or Click to Begin Trial</button>
+            </div>
+
+            <!-- Active Training Screen -->
+            <div class="screen hidden" id="training-container">
+                <div class="trial-counter" id="game-trial-counter">Trial 1 of 32</div>
+                <div class="cue-text" id="cue-display">Rule: Meaning</div>
+                <div class="stimulus-container" id="stimulus-placement-area">
+                    <div class="stimulus-box" id="stimulus-left">4</div>
+                    <div class="stimulus-box" id="stimulus-right">IV</div>
+                </div>
+                <div class="action-buttons">
+                    <button id="btn-same">Same (<span id="lbl-key-same">S</span>)</button>
+                    <button id="btn-diff">Different (<span id="lbl-key-diff">D</span>)</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Post-Session Summary Modal Popup -->
+    <div class="modal-overlay hidden" id="summary-modal">
+        <div class="modal-content" id="summary-modal-content">
+            <h1>Session Complete!</h1>
+            <p id="summary-stats-text">Great execution on high-speed semantic retrieval.</p>
+            <button class="primary" id="btn-modal-close">Return to Dashboard</button>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="overlay-panel" id="settings-panel">
+        <div class="panel-header">
+            <h3>Tool Settings</h3>
+            <button id="btn-close-settings">Close</button>
+        </div>
+        <div class="panel-content">
+            <!-- Training Mode -->
+            <div class="setting-card">
+                <label>Pacing Mode</label>
+                <select id="setting-training-mode">
+                    <option value="adaptive">Adaptive</option>
+                    <option value="manual">Manual (Fixed level)</option>
+                </select>
+            </div>
+
+            <!-- Mode Selector -->
+            <div class="setting-card">
+                <label>Task Modes</label>
+                <div class="checkbox-row" style="margin-top: 0.5rem;">
+                    <input type="checkbox" id="setting-classic-mode" checked>
+                    <span>Classic Mode (Numbers & Physical format)</span>
+                </div>
+                <div class="checkbox-row" style="margin-top: 0.5rem;">
+                    <input type="checkbox" id="setting-multi-mode" checked>
+                    <span>Multi Mode (Synonyms, Categories, Functions, Colors)</span>
+                </div>
+                <div class="checkbox-row" style="margin-top: 0.5rem;">
+                    <input type="checkbox" id="setting-affective-mode">
+                    <span>Affective Mode (Emotional interference & valence)</span>
+                </div>
+            </div>
+
+            <!-- Experimental Features -->
+            <div class="setting-card">
+                <label>Advanced Modifiers</label>
+                <div class="checkbox-row" style="margin-top: 0.5rem;">
+                    <input type="checkbox" id="setting-ufoiv">
+                    <span>Peripheral Saccades / UFOV (Random positions)</span>
+                </div>
+                <div class="checkbox-row" style="margin-top: 0.5rem;">
+                    <input type="checkbox" id="setting-inversion">
+                    <span>Rule Inversion (Go/No-Go Red stimulus toggle)</span>
+                </div>
+                <div class="checkbox-row" style="margin-top: 0.5rem;">
+                    <input type="checkbox" id="setting-sound" checked>
+                    <span>Error Buzzer & Audio Feedback</span>
+                </div>
+            </div>
+
+            <!-- Language / Localization -->
+            <div class="setting-card">
+                <label>Numeral Language Support</label>
+                <select id="setting-language">
+                    <option value="en">English (Numbers & Words)</option>
+                    <option value="es">Spanish (Uno, Dos, Tres...)</option>
+                    <option value="zh">Chinese Numerals (一, 二, 三...)</option>
+                </select>
+            </div>
+
+            <!-- Custom Word Pairs -->
+            <div class="setting-card">
+                <label>Custom Word Pairs (JSON format)</label>
+                <textarea id="setting-custom-pairs" placeholder='[{"l":"A","r":"B","rule":"meaning","isSame":true}]'></textarea>
+            </div>
+
+            <!-- Rule Screen Delay -->
+            <div class="setting-card">
+                <label for="setting-auto-advance">Rule Display Delay</label>
+                <select id="setting-auto-advance">
+                    <option value="0.75">0.75 seconds</option>
+                    <option value="1.25" selected>1.25 seconds</option>
+                    <option value="2">2 seconds</option>
+                    <option value="0">Manual Click / Spacebar</option>
+                </select>
+            </div>
+
+            <!-- Manual Level Selection -->
+            <div class="setting-card" id="manual-level-card">
+                <label>Starting / Fixed Level Selection (Clicking sets starting point in adaptive mode)</label>
+                <div class="level-grid" id="level-grid"></div>
+            </div>
+
+            <!-- Keybindings -->
+            <div class="setting-card">
+                <label>Keybindings Customization</label>
+                <div class="keybind-row" style="margin-top: 0.5rem;">
+                    <span>Same Action</span>
+                    <button class="key-capture-btn" id="bind-same" data-action="same">S</button>
+                </div>
+                <div class="keybind-row" style="margin-top: 0.5rem;">
+                    <span>Different Action</span>
+                    <button class="key-capture-btn" id="bind-diff" data-action="diff">D</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // --- APPLICATION STATE ---
-        let appState = {
-            inSession: false,
-            continuousMode: true,
-            mode: 'classic',
-            totalTrials: 20,
-            currentTrial: 0,
-            score: { correct: 0, total: 0, reactionTimes: [] },
-            targetIndex: null, // 0: Left, 2: Right
-            trialStartTime: null,
-            awaitingInput: false,
-            timeoutId: null
+        const ALL_LEVELS = [1, 2, 3, 4, 5, 6, 7, 7.5, 8, 8.5, 9, 10, 11, 12, 13];
+
+        const AFFECTIVE_WORD_BANK = {
+            threat: [
+                "TERROR", "PANIC", "AGONY", "HORROR", "SLAUGHTER",
+                "SUFFOCATION", "FATAL", "RAGE", "SCREAM", "TORTURE",
+                "SHELTERLESS", "EXECUTION", "EXPLOSION", "DISASTER", "AMBUSH",
+                "HOSTAGE", "CHAOS", "MUTILATION", "VIOLENCE", "CRUELTY",
+                "MASSACRE", "ASSAULT", "PERISH", "STRANGLE", "VENOM",
+                "ANNIHILATION", "BLOODBATH", "DECIMATE", "AMPUTATE", "STRANGULATION",
+                "PARALYSIS", "HEMORRHAGE", "ASPHYXIATION", "BUTCHERY", "CARNAGE"
+            ],
+            grief: [
+                "DESPAIR", "ANGUISH", "BETRAYAL", "ISOLATION", "ABANDONED",
+                "DEVASTATION", "TRAGEDY", "MISERY", "GRIEF", "HEARTBREAK",
+                "LONELINESS", "HOPELESS", "SHATTERED", "HELPLESS", "LOSS",
+                "REGRET", "CONDEMNED", "RUIN", "REJECTION", "MOURNING",
+                "ORPHANED", "DESTITUTE", "FORSAKEN", "HOLLOW", "EXILE",
+                "DESOLATE", "CREMATION", "BEREAVED", "CONSUMED",
+                "DECAYING", "STARK", "UNLAMENTED", "GODFORSAKEN", "INCURABLE"
+            ],
+            visceral: [
+                "REVULSION", "DECAY", "CORRUPTION", "FOUL", "ROT",
+                "CONTAMINATION", "NAUSEA", "INFESTATION", "POISON", "SICKNESS",
+                "SEWAGE", "INFECTION", "MAGGOT", "FILTH", "SMEAR",
+                "DISEASE", "PUTRID", "TOXIC", "DRAIN", "CANCER",
+                "ULCER", "GORE", "BILE", "SEPTIC", "GANGRANE",
+                "NECROSIS", "BIOLOGICAL", "EXUDATE", "PUS", "VISCERA",
+                "MUCUS", "BIOMASS", "CONTAMINATED", "SORDID", "ULCEROUS"
+            ],
+            intensePositive: [
+                "ECSTASY", "EUPHORIA", "RAPTURE", "PASSION", "BLISS",
+                "TRIUMPH", "OBSESSION", "ADRENALINE", "EXHILARATION", "DEVOTION",
+                "PARADISE", "DELIGHT", "THRILL", "VICTORY", "BELOVED",
+                "INTOXICATION", "DESIRE", "CHERISH", "INFATUATION", "FEAST",
+                "IMMORTAL", "SUPREME", "INVINCIBLE", "EUPHORIC",
+                "APEX", "ELECTRIC", "UNSTOPPABLE", "GODLIKE", "TRANSCENDENT",
+                "MAGNIFICENT", "UNBOUND", "SUPREMACY", "PHENOMENAL", "BLINDING"
+            ],
+            ambiguousShock: [
+                "VOID", "UNHINGED", "HYSTERIA", "PARANOIA", "VULNERABLE",
+                "CONFESSION", "SURREAL", "JUDGMENT", "REVELATION", "FATUM",
+                "STALKER", "SECRETS", "HALLUCINATION", "OBSCURITY", "DELUSION",
+                "SHADOW", "ECHO", "SUSPITION", "INVASION", "CONTAGION",
+                "GLITCH", "ANOMALY", "MIRAGE", "DECEPTION", "PANOPTICON",
+                "SCHIZOID", "LABYRINTH", "DISLOCATION", "WHISPER", "DOPPELGANGER",
+                "UNCONSCIOUS", "AMNESIA", "SOMNAMBULIST", "PARALYSIS", "CIPHER"
+            ],
+            socialIsolation: [
+                "IGNORED", "ABANDONED", "ISOLATED", "REJECTED", "EXCLUDED",
+                "ALONE", "UNWANTED", "FORGOTTEN", "DISTANT", "OUTCAST",
+                "INVISIBLE", "UNSEEN", "OSTRACIZED", "PARIAH", "EXILED",
+                "QUARANTINED", "GHOST", "UNMOURNED", "REMOVED", "NULLIFIED",
+                "DETACHED", "STRANDED", "EXTINCTION", "MONAD", "ANONYMOUS"
+            ],
+            sexual: [
+                "CARNAL", "LUST", "ECSTATIC", "INTIMATE", "TEMPTATION",
+                "SEDUCTION", "FLESH", "FORBIDDEN", "YEARNING", "ORGASM",
+                "BONDAGE", "SKIN", "WARMTH", "HUNGER", "DOMINION",
+                "SURRENDER", "POSSESSION", "MOAN", "BREATH", "RAPTURE",
+                "FETISH", "OBSESSION", "ENTWINED", "EXPOSED", "APHRODISIAC",
+                "SAVAGE", "LASCIVIOUS", "RAW", "GRAZING", "VOLUPTUOUS"
+            ],
+            spiritualSacred: [
+                "SACRED", "DIVINE", "INFINITY", "ETERNAL", "TRANSCENDENT",
+                "HOLY", "SOUL", "REDEMPTION", "BLINDING", "REVELATION",
+                "SANCTUARY", "HALO", "ABSOLUTE", "GRACE", "PURITY",
+                "COSMIC", "DAMNATION", "ALTAR", "PRAYER", "GLORY",
+                "BLASPHEMY", "SERAPHIM", "MARTYRDOM", "ZEALOT", "APOCALYPSE",
+                "PROPHESY", "OMNIPOTENT", "SANCTIFIED", "EXCOMMUNICATED", "DIVINITY"
+            ],
+            existentialDread: [
+                "OBSOLETE", "MEANINGLESS", "NULL", "ABYSS", "PHANTOM",
+                "TRANSIENT", "FUTILE", "INSIGNIFICANT", "ECLIPSE", "TERMINAL",
+                "SILENCE", "WITHER", "VANISH", "SOLIPSISM", "DISSOLUTION",
+                "NOTHINGNESS", "OBLIVION", "ENTROPY", "NIHIL", "ETERNITY",
+                "UNMADE", "VANISHING", "INEVITABLE", "VACUUM", "NONEXISTENT"
+            ],
+            cyberneticHorror: [
+                "OVERRIDE", "CORRUPTED", "MALWARE", "INTEGRITY", "FAIL", "DISCONNECTED",
+                "SYNAPSE", "OVERLOAD", "PARASITE", "INVASION", "ANOMALY",
+                "BLACKBOX", "TERMINATED", "RECURSION", "LOOP", "ERROR",
+                "MUTATED", "UNRESPONSIVE", "BREACH", "ISOLATED", "HOST"
+            ]
         };
 
-        const affectWords = ["Threat", "Panic", "Calm", "Focus", "Safe", "Risk", "Doubt", "Poise"];
-
-        // --- EVENT LISTENERS ---
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('startBtn').addEventListener('click', initializeSession);
+        const state = {
+            level: 1,
+            maxLevelReached: 1,
+            correctCount: 0,
+            totalCount: 0,
+            consecutiveErrors: 0,
+            currentTrialIndex: 0,
+            maxTrials: 32,
+            phase: 'dashboard',
             
-            const closeBtn = document.getElementById('btnModalClose');
-            const continuousToggle = document.getElementById('continuousModeToggle');
-            const menuContinuousToggle = document.getElementById('menuContinuousToggle');
+            inputLocked: false,
+            isPaused: false,
+            lastPhase: null,
+            trialStartTime: 0,
+            trialTotalTime: 0,
+            
+            autoAdvanceTimer: null,
+            trialTimeout: null,
+            lifetimeStats: {
+                totalSessions: 0,
+                totalTrials: 0,
+                totalCorrect: 0,
+                dailyLogs: {} // { "YYYY-MM-DD": count }
+            },
+            settings: {
+                trainingMode: 'adaptive',
+                classicMode: true,
+                multiMode: true,
+                affectiveMode: false,
+                ufoiv: false,
+                inversion: false,
+                soundEnabled: true,
+                language: 'en',
+                customPairsJson: '',
+                autoAdvanceDelay: 1.25,
+                fixedLevel: 1,
+                sameKey: 'KeyS',
+                sameKeyLabel: 'S',
+                diffKey: 'KeyD',
+                diffKeyLabel: 'D'
+            },
+            currentTrialData: {
+                rule: '',
+                left: '',
+                right: '',
+                isSame: false,
+                isInverted: false,
+                isAffective: false
+            },
+            listeningForBinding: null
+        };
 
-            if (closeBtn) {
-                closeBtn.addEventListener('click', handleSummaryDismissal);
-            }
-
-            if (continuousToggle) {
-                continuousToggle.addEventListener('change', (e) => {
-                    appState.continuousMode = e.target.checked;
-                    menuContinuousToggle.checked = e.target.checked;
-                });
-            }
-
-            if (menuContinuousToggle) {
-                menuContinuousToggle.addEventListener('change', (e) => {
-                    appState.continuousMode = e.target.checked;
-                    continuousToggle.checked = e.target.checked;
-                });
-            }
-
-            // Keyboard response listeners
-            window.addEventListener('keydown', handleUserKeyInput);
-        });
-
-        // --- SESSION CONTROL ---
-        function initializeSession() {
-            appState.mode = document.getElementById('taskMode').value;
-            appState.totalTrials = parseInt(document.getElementById('trialCount').value);
-            appState.currentTrial = 0;
-            appState.score = { correct: 0, total: 0, reactionTimes: [] };
-
-            document.getElementById('menuScreen').style.display = 'none';
-            document.getElementById('taskScreen').style.display = 'flex';
-
-            runNextTrial();
+        let audioCtx = null;
+        function playTone(success) {
+            if (!state.settings.soundEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = success ? 'sine' : 'sawtooth';
+                osc.frequency.setValueAtTime(success ? 600 : 180, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.15);
+            } catch(e) {}
         }
 
-        function runNextTrial() {
-            if (appState.currentTrial >= appState.totalTrials) {
+        // DOM Elements
+        const dashboardScreen = document.getElementById('dashboard-screen');
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const ruleScreen = document.getElementById('rule-screen');
+        const trainingContainer = document.getElementById('training-container');
+        const summaryModal = document.getElementById('summary-modal');
+        const summaryModalContent = document.getElementById('summary-modal-content');
+        const pauseScreen = document.getElementById('pause-screen');
+
+        const navLogo = document.getElementById('nav-logo');
+        const btnDashboard = document.getElementById('btn-dashboard');
+        const startBtn = document.getElementById('btn-start');
+        const startFromDashBtn = document.getElementById('btn-start-from-dash');
+        const btnModalClose = document.getElementById('btn-modal-close');
+        const readyBtn = document.getElementById('btn-ready');
+        const btnPause = document.getElementById('btn-pause');
+        const btnResume = document.getElementById('btn-resume');
+        
+        const settingsBtn = document.getElementById('btn-settings');
+        const closeSettingsBtn = document.getElementById('btn-close-settings');
+        const settingsPanel = document.getElementById('settings-panel');
+
+        const ruleCueBox = document.getElementById('rule-cue-box');
+        const ruleTrialCounter = document.getElementById('rule-trial-counter');
+        const gameTrialCounter = document.getElementById('game-trial-counter');
+        const ruleInstructionHint = document.getElementById('rule-instruction-hint');
+
+        const cueDisplay = document.getElementById('cue-display');
+        const stimulusPlacementArea = document.getElementById('stimulus-placement-area');
+        const stimulusLeft = document.getElementById('stimulus-left');
+        const stimulusRight = document.getElementById('stimulus-right');
+        
+        const sameBtn = document.getElementById('btn-same');
+        const diffBtn = document.getElementById('btn-diff');
+        const lblKeySame = document.getElementById('lbl-key-same');
+        const lblKeyDiff = document.getElementById('lbl-key-diff');
+
+        const bindSameBtn = document.getElementById('bind-same');
+        const bindDiffBtn = document.getElementById('bind-diff');
+        const settingTrainingMode = document.getElementById('setting-training-mode');
+        const settingClassicMode = document.getElementById('setting-classic-mode');
+        const settingMultiMode = document.getElementById('setting-multi-mode');
+        const settingAffectiveMode = document.getElementById('setting-affective-mode');
+        const settingUfoiv = document.getElementById('setting-ufoiv');
+        const settingInversion = document.getElementById('setting-inversion');
+        const settingSound = document.getElementById('setting-sound');
+        const settingLanguage = document.getElementById('setting-language');
+        const settingCustomPairs = document.getElementById('setting-custom-pairs');
+        const settingAutoAdvance = document.getElementById('setting-auto-advance');
+        const levelGrid = document.getElementById('level-grid');
+
+        const statLevel = document.getElementById('stat-level');
+        const statAcc = document.getElementById('stat-acc');
+        const statTrial = document.getElementById('stat-trial');
+        const statDailySessions = document.getElementById('stat-daily-sessions');
+        const summaryStatsText = document.getElementById('summary-stats-text');
+
+        const dashSessions = document.getElementById('dash-sessions');
+        const dashDailySessions = document.getElementById('dash-daily-sessions');
+        const dashAccuracy = document.getElementById('dash-accuracy');
+        const dashLevel = document.getElementById('dash-level');
+
+        function getTodayKey() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function getTodaySessionsCount() {
+            const today = getTodayKey();
+            if (!state.lifetimeStats.dailyLogs) {
+                state.lifetimeStats.dailyLogs = {};
+            }
+            return state.lifetimeStats.dailyLogs[today] || 0;
+        }
+
+        function buildLevelGrid() {
+            levelGrid.innerHTML = '';
+            ALL_LEVELS.forEach(lvl => {
+                const btn = document.createElement('button');
+                btn.className = `level-btn ${(state.settings.trainingMode === 'manual' ? state.settings.fixedLevel : state.level) === lvl ? 'active' : ''}`;
+                btn.textContent = lvl;
+                btn.addEventListener('click', () => {
+                    if (state.settings.trainingMode === 'manual') {
+                        state.settings.fixedLevel = lvl;
+                    }
+                    state.level = lvl;
+                    statLevel.textContent = lvl;
+                    saveStorage();
+                    buildLevelGrid();
+                });
+                levelGrid.appendChild(btn);
+            });
+        }
+
+        function loadStorage() {
+            const saved = localStorage.getItem('sem_ltmr_settings');
+            if (saved) {
+                state.settings = JSON.parse(saved);
+                updateKeybindLabels();
+                settingTrainingMode.value = state.settings.trainingMode;
+                settingClassicMode.checked = state.settings.classicMode;
+                settingMultiMode.checked = state.settings.multiMode;
+                settingAffectiveMode.checked = !!state.settings.affectiveMode;
+                settingUfoiv.checked = state.settings.ufoiv;
+                settingInversion.checked = state.settings.inversion;
+                settingSound.checked = state.settings.soundEnabled;
+                settingLanguage.value = state.settings.language;
+                settingCustomPairs.value = state.settings.customPairsJson || '';
+                settingAutoAdvance.value = state.settings.autoAdvanceDelay;
+            }
+            const savedStats = localStorage.getItem('sem_ltmr_stats');
+            if (savedStats) {
+                state.lifetimeStats = JSON.parse(savedStats);
+                if (!state.lifetimeStats.dailyLogs) {
+                    state.lifetimeStats.dailyLogs = {};
+                }
+            }
+            const savedMax = localStorage.getItem('sem_ltmr_maxlevel');
+            if (savedMax) {
+                state.maxLevelReached = parseFloat(savedMax) || 1;
+            }
+
+            if (state.settings.trainingMode === 'manual') {
+                state.level = state.settings.fixedLevel || 1;
+            }
+            statLevel.textContent = state.level;
+            updateDashboardDisplay();
+            buildLevelGrid();
+        }
+
+        function saveStorage() {
+            localStorage.setItem('sem_ltmr_settings', JSON.stringify(state.settings));
+            localStorage.setItem('sem_ltmr_stats', JSON.stringify(state.lifetimeStats));
+            localStorage.setItem('sem_ltmr_maxlevel', state.maxLevelReached.toString());
+        }
+
+        function updateDashboardDisplay() {
+            dashSessions.textContent = state.lifetimeStats.totalSessions;
+            const todayCount = getTodaySessionsCount();
+            dashDailySessions.textContent = todayCount;
+            statDailySessions.textContent = todayCount;
+
+            const lifetimeAcc = state.lifetimeStats.totalTrials > 0 ? Math.round((state.lifetimeStats.totalCorrect / state.lifetimeStats.totalTrials) * 100) : 0;
+            dashAccuracy.textContent = `${lifetimeAcc}%`;
+            dashLevel.textContent = state.maxLevelReached;
+        }
+
+        function updateKeybindLabels() {
+            lblKeySame.textContent = state.settings.sameKeyLabel;
+            lblKeyDiff.textContent = state.settings.diffKeyLabel;
+            bindSameBtn.textContent = state.settings.sameKeyLabel;
+            bindDiffBtn.textContent = state.settings.diffKeyLabel;
+        }
+
+        function togglePause() {
+            if (state.phase === 'dashboard' || state.phase === 'welcome') return;
+
+            if (!state.isPaused) {
+                state.isPaused = true;
+                clearTimers();
+                
+                if (state.phase === 'stimulus') {
+                    const elapsed = Date.now() - state.trialStartTime;
+                    state.trialTotalTime -= elapsed;
+                }
+                
+                state.lastPhase = state.phase;
+                state.phase = 'paused';
+                
+                ruleScreen.classList.add('hidden');
+                trainingContainer.classList.add('hidden');
+                pauseScreen.classList.remove('hidden');
+                btnPause.textContent = 'Resume';
+            } else {
+                state.isPaused = false;
+                pauseScreen.classList.add('hidden');
+                btnPause.textContent = 'Pause';
+                state.phase = state.lastPhase;
+
+                if (state.phase === 'rule') {
+                    ruleScreen.classList.remove('hidden');
+                    const delay = state.settings.autoAdvanceDelay;
+                    if (delay > 0) {
+                        state.autoAdvanceTimer = setTimeout(() => {
+                            if (state.phase === 'rule') advanceToStimulus();
+                        }, delay * 1000);
+                    }
+                } else if (state.phase === 'stimulus') {
+                    trainingContainer.classList.remove('hidden');
+                    state.trialStartTime = Date.now();
+                    const resumeTime = Math.max(state.trialTotalTime, 800);
+                    state.trialTimeout = setTimeout(() => {
+                        if (state.phase === 'stimulus') handleUserChoice(null);
+                    }, resumeTime);
+                }
+            }
+        }
+
+        btnPause.addEventListener('click', togglePause);
+        btnResume.addEventListener('click', togglePause);
+
+        document.querySelectorAll('.key-capture-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const action = e.target.getAttribute('data-action');
+                state.listeningForBinding = action;
+                e.target.textContent = 'Press key...';
+                e.target.classList.add('listening');
+            });
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (!summaryModal.classList.contains('hidden')) {
+                if (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') {
+                    e.preventDefault();
+                    dismissSummary();
+                    return;
+                }
+            }
+
+            if (state.listeningForBinding) {
+                e.preventDefault();
+                const action = state.listeningForBinding;
+                let label = e.key.toUpperCase();
+                if (e.key === ' ') label = 'SPACE';
+                
+                if (action === 'same') {
+                    state.settings.sameKey = e.code;
+                    state.settings.sameKeyLabel = label;
+                } else if (action === 'diff') {
+                    state.settings.diffKey = e.code;
+                    state.settings.diffKeyLabel = label;
+                }
+
+                document.querySelectorAll('.key-capture-btn').forEach(b => b.classList.remove('listening'));
+                state.listeningForBinding = null;
+                updateKeybindLabels();
+                saveStorage();
+                return;
+            }
+
+            if (e.code === 'KeyP' || e.code === 'Escape') {
+                if (state.phase === 'rule' || state.phase === 'stimulus' || state.phase === 'paused') {
+                    e.preventDefault();
+                    togglePause();
+                    return;
+                }
+            }
+
+            if (e.code === 'Space') {
+                if (state.phase === 'dashboard') {
+                    e.preventDefault();
+                    startSession();
+                    return;
+                } else if (state.phase === 'welcome') {
+                    e.preventDefault();
+                    beginTrialsSequence();
+                    return;
+                } else if (state.phase === 'rule' && state.settings.autoAdvanceDelay == 0 && !state.isPaused) {
+                    e.preventDefault();
+                    advanceToStimulus();
+                    return;
+                }
+            }
+
+            if (state.phase === 'rule' && state.settings.autoAdvanceDelay == 0 && !state.isPaused && (e.code === state.settings.sameKey || e.code === state.settings.diffKey)) {
+                e.preventDefault();
+                advanceToStimulus();
+                return;
+            }
+
+            if (state.phase !== 'stimulus' || state.isPaused || state.inputLocked) return;
+
+            if (e.code === state.settings.sameKey) {
+                handleUserChoice(true);
+            } else if (e.code === state.settings.diffKey) {
+                handleUserChoice(false);
+            }
+        });
+
+        settingsBtn.addEventListener('click', () => settingsPanel.classList.add('open'));
+        closeSettingsBtn.addEventListener('click', () => settingsPanel.classList.remove('open'));
+        navLogo.addEventListener('click', showDashboard);
+        btnDashboard.addEventListener('click', showDashboard);
+
+        settingTrainingMode.addEventListener('change', (e) => {
+            state.settings.trainingMode = e.target.value;
+            if (e.target.value === 'manual') {
+                state.level = state.settings.fixedLevel;
+            }
+            statLevel.textContent = state.level;
+            saveStorage();
+            buildLevelGrid();
+        });
+
+        settingClassicMode.addEventListener('change', (e) => { state.settings.classicMode = e.target.checked; saveStorage(); });
+        settingMultiMode.addEventListener('change', (e) => { state.settings.multiMode = e.target.checked; saveStorage(); });
+        settingAffectiveMode.addEventListener('change', (e) => { state.settings.affectiveMode = e.target.checked; saveStorage(); });
+        settingUfoiv.addEventListener('change', (e) => { state.settings.ufoiv = e.target.checked; saveStorage(); });
+        settingInversion.addEventListener('change', (e) => { state.settings.inversion = e.target.checked; saveStorage(); });
+        settingSound.addEventListener('change', (e) => { state.settings.soundEnabled = e.target.checked; saveStorage(); });
+        settingLanguage.addEventListener('change', (e) => { state.settings.language = e.target.value; saveStorage(); });
+        settingCustomPairs.addEventListener('input', (e) => { state.settings.customPairsJson = e.target.value; saveStorage(); });
+        settingAutoAdvance.addEventListener('change', (e) => { state.settings.autoAdvanceDelay = parseFloat(e.target.value); saveStorage(); });
+
+        function showDashboard() {
+            clearTimers();
+            state.phase = 'dashboard';
+            state.isPaused = false;
+            
+            dashboardScreen.classList.remove('hidden');
+            btnPause.classList.add('hidden');
+            welcomeScreen.classList.add('hidden');
+            ruleScreen.classList.add('hidden');
+            pauseScreen.classList.add('hidden');
+            trainingContainer.classList.add('hidden');
+            summaryModal.classList.add('hidden');
+            
+            updateDashboardDisplay();
+        }
+
+        startBtn.addEventListener('click', beginTrialsSequence);
+        startFromDashBtn.addEventListener('click', startSession);
+        
+        function dismissSummary() {
+            summaryModal.classList.add('hidden');
+            showDashboard();
+        }
+
+        btnModalClose.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dismissSummary();
+        });
+
+        summaryModal.addEventListener('click', () => {
+            dismissSummary();
+        });
+
+        summaryModalContent.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dismissSummary();
+        });
+
+        function startSession() {
+            dashboardScreen.classList.add('hidden');
+            welcomeScreen.classList.remove('hidden');
+            state.phase = 'welcome';
+            settingsPanel.classList.remove('open');
+        }
+
+        function beginTrialsSequence() {
+            state.currentTrialIndex = 0;
+            state.correctCount = 0;
+            state.totalCount = 0;
+            state.consecutiveErrors = 0;
+            state.isPaused = false;
+            
+            if (state.settings.trainingMode === 'manual') {
+                state.level = state.settings.fixedLevel;
+            }
+            
+            statLevel.textContent = state.level;
+            
+            welcomeScreen.classList.add('hidden');
+            summaryModal.classList.add('hidden');
+            btnPause.classList.remove('hidden'); 
+            
+            nextTrial();
+        }
+
+        function clearTimers() {
+            clearTimeout(state.autoAdvanceTimer);
+            clearTimeout(state.trialTimeout);
+        }
+
+        function nextTrial() {
+            clearTimers();
+            if (state.currentTrialIndex >= state.maxTrials) {
                 endSession();
                 return;
             }
 
-            appState.currentTrial++;
-            appState.awaitingInput = false;
+            state.currentTrialIndex++;
+            statTrial.textContent = `${state.currentTrialIndex}/${state.maxTrials}`;
+            ruleTrialCounter.textContent = `Trial ${state.currentTrialIndex} of ${state.maxTrials}`;
+            gameTrialCounter.textContent = `Trial ${state.currentTrialIndex} of ${state.maxTrials}`;
 
-            // Reset boxes
-            const leftBox = document.getElementById('leftBox');
-            const rightBox = document.getElementById('rightBox');
-            leftBox.innerText = '';
-            rightBox.innerText = '';
-            leftBox.className = 'box';
-            rightBox.className = 'box';
+            generateTrialContent();
 
-            // 1. Fixation phase (500ms)
-            setTimeout(() => {
-                // Determine Target Position (0: Left, 2: Right)
-                appState.targetIndex = Math.random() < 0.5 ? 0 : 2;
+            state.phase = 'rule';
+            ruleScreen.classList.remove('hidden');
+            trainingContainer.classList.add('hidden');
 
-                // Render Stimulus / Cue
-                if (appState.mode === 'affective') {
-                    const decoyWord = affectWords[Math.floor(Math.random() * affectWords.length)];
-                    const targetWord = affectWords[Math.floor(Math.random() * affectWords.length)];
-                    leftBox.innerText = appState.targetIndex === 0 ? targetWord : decoyWord;
-                    rightBox.innerText = appState.targetIndex === 2 ? targetWord : decoyWord;
-                    leftBox.style.fontSize = '1rem';
-                    rightBox.style.fontSize = '1rem';
-                } else {
-                    leftBox.innerText = appState.targetIndex === 0 ? '•' : '';
-                    rightBox.innerText = appState.targetIndex === 2 ? '•' : '';
-                }
-
-                appState.trialStartTime = performance.now();
-                appState.awaitingInput = true;
-
-            }, 500);
-        }
-
-        // --- INPUT HANDLING ---
-        function handleUserKeyInput(e) {
-            // Check for Modal Dismissal via Space / Enter
-            const summaryModal = document.getElementById('summaryModal');
-            if (summaryModal && !summaryModal.classList.contains('hidden')) {
-                if (e.code === 'Space' || e.code === 'Enter') {
-                    e.preventDefault();
-                    handleSummaryDismissal();
-                }
-                return;
-            }
-
-            // Task Trial Inputs (Left Arrow / Right Arrow)
-            if (!appState.awaitingInput) return;
-
-            let selectedChoice = null;
-            if (e.code === 'ArrowLeft') selectedChoice = 0;
-            if (e.code === 'ArrowRight') selectedChoice = 2;
-
-            if (selectedChoice !== null) {
-                e.preventDefault();
-                processTrialResponse(selectedChoice);
-            }
-        }
-
-        function processTrialResponse(choice) {
-            appState.awaitingInput = false;
-            const rt = performance.now() - appState.trialStartTime;
-            const isCorrect = (choice === appState.targetIndex);
-
-            appState.score.total++;
-            if (isCorrect) {
-                appState.score.correct++;
-                appState.score.reactionTimes.push(rt);
-            }
-
-            // Visual feedback flash
-            const activeBox = document.getElementById(appState.targetIndex === 0 ? 'leftBox' : 'rightBox');
-            activeBox.classList.add(isCorrect ? 'flash-correct' : 'flash-error');
-
-            setTimeout(() => {
-                runNextTrial();
-            }, 400);
-        }
-
-        // --- SUMMARY & CONTINUOUS FLOW ---
-        function endSession() {
-            document.getElementById('taskScreen').style.display = 'none';
-
-            const avgRt = appState.score.reactionTimes.length > 0 
-                ? Math.round(appState.score.reactionTimes.reduce((a, b) => a + b, 0) / appState.score.reactionTimes.length) 
-                : 0;
-            
-            const accuracy = Math.round((appState.score.correct / appState.totalTrials) * 100);
-
-            document.getElementById('summaryStats').innerHTML = `
-                Accuracy: <span>${accuracy}%</span> (${appState.score.correct}/${appState.totalTrials})<br>
-                Avg Reaction Time: <span>${avgRt} ms</span><br>
-                Mode: <span>${appState.mode.toUpperCase()}</span>
-            `;
-
-            document.getElementById('summaryModal').classList.remove('hidden');
-        }
-
-        function handleSummaryDismissal() {
-            const summaryModal = document.getElementById('summaryModal');
-            if (summaryModal) {
-                summaryModal.classList.add('hidden');
-            }
-
-            if (appState.continuousMode) {
-                triggerContinuousTransition(() => {
-                    document.getElementById('taskScreen').style.display = 'flex';
-                    runNextTrial();
-                });
+            let ruleLabel = state.currentTrialData.rule.toUpperCase();
+            if (state.currentTrialData.isInverted) {
+                ruleLabel += " [INVERTED GO/NO-GO]";
+                ruleCueBox.style.color = varColor('--danger', '#ef4444');
             } else {
-                document.getElementById('menuScreen').style.display = 'block';
+                ruleCueBox.style.color = varColor('--accent', '#38bdf8');
+            }
+            ruleCueBox.textContent = `Rule: ${ruleLabel}`;
+
+            const delay = state.settings.autoAdvanceDelay;
+            if (delay > 0) {
+                ruleInstructionHint.textContent = `Proceeding in ${delay}s...`;
+                readyBtn.classList.add('hidden');
+                state.autoAdvanceTimer = setTimeout(() => {
+                    if (state.phase === 'rule' && !state.isPaused) {
+                        advanceToStimulus();
+                    }
+                }, delay * 1000);
+            } else {
+                ruleInstructionHint.textContent = `Press Space or click below when ready.`;
+                readyBtn.classList.remove('hidden');
             }
         }
 
-        function triggerContinuousTransition(callback) {
-            let overlay = document.getElementById('continuousTransitionOverlay');
+        function varColor(name, fallback) {
+            return getComputedStyle(document.documentElement).getPropertyValue(name) || fallback;
+        }
+
+        function advanceToStimulus() {
+            clearTimeout(state.autoAdvanceTimer);
+            state.phase = 'stimulus';
+            state.inputLocked = false; 
             
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.id = 'continuousTransitionOverlay';
-                overlay.style.cssText = `
-                    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-                    background: rgba(10, 10, 15, 0.92); color: #f0f0f5; display: flex;
-                    flex-direction: column; justify-content: center; align-items: center;
-                    z-index: 10000; transition: opacity 0.2s ease;
-                `;
-                document.body.appendChild(overlay);
+            ruleScreen.classList.add('hidden');
+            trainingContainer.classList.remove('hidden');
+
+            let ruleTextHeading = `Rule: ${state.currentTrialData.rule.toUpperCase()}${state.currentTrialData.isInverted ? ' (INVERTED)' : ''}`;
+            if (state.currentTrialData.isAffective) {
+                ruleTextHeading += ' [AFFECTIVE INTERFERENCE]';
+            }
+            cueDisplay.textContent = ruleTextHeading;
+            
+            stimulusLeft.textContent = state.currentTrialData.left;
+            stimulusRight.textContent = state.currentTrialData.right;
+
+            if (state.currentTrialData.isAffective) {
+                stimulusLeft.classList.add('affective-distractor');
+                stimulusRight.classList.add('affective-distractor');
+            } else {
+                stimulusLeft.classList.remove('affective-distractor');
+                stimulusRight.classList.remove('affective-distractor');
             }
 
-            let countdown = 2;
-            overlay.style.display = 'flex';
-            overlay.style.opacity = '1';
+            if (state.settings.ufoiv) {
+                stimulusLeft.style.position = 'absolute';
+                stimulusRight.style.position = 'absolute';
+                const leftPos = Math.floor(Math.random() * 40) + 5;
+                const rightPos = Math.floor(Math.random() * 40) + 55;
+                const topPos = Math.floor(Math.random() * 40) - 20;
+                stimulusLeft.style.left = `${leftPos}%`;
+                stimulusRight.style.left = `${rightPos}%`;
+                stimulusLeft.style.top = `${topPos}px`;
+                stimulusRight.style.top = `${topPos}px`;
+            } else {
+                stimulusLeft.style.position = 'static';
+                stimulusRight.style.position = 'static';
+                stimulusLeft.style.left = 'auto';
+                stimulusRight.style.left = 'auto';
+                stimulusLeft.style.top = 'auto';
+                stimulusRight.style.top = 'auto';
+            }
+
+            if (state.currentTrialData.isInverted) {
+                stimulusLeft.classList.add('inverted-rule');
+                stimulusRight.classList.add('inverted-rule');
+            } else {
+                stimulusLeft.classList.remove('inverted-rule');
+                stimulusRight.classList.remove('inverted-rule');
+            }
+
+            const baseTime = 1300 - (state.level * 100);
+            state.trialTotalTime = Math.max(50, Math.round(baseTime));
+            state.trialStartTime = Date.now();
             
-            overlay.innerHTML = `
-                <div style="font-size: 1.5rem; margin-bottom: 10px; font-weight: 500;">Get Ready for Next Session</div>
-                <div id="transitionCountdownNum" style="font-size: 3rem; font-weight: 700; color: var(--accent-color);">${countdown}</div>
-            `;
-
-            const timer = setInterval(() => {
-                countdown--;
-                const numElem = document.getElementById('transitionCountdownNum');
-                if (numElem) numElem.innerText = countdown;
-
-                if (countdown <= 0) {
-                    clearInterval(timer);
-                    overlay.style.opacity = '0';
-                    setTimeout(() => {
-                        overlay.style.display = 'none';
-                        callback();
-                    }, 200);
+            state.trialTimeout = setTimeout(() => {
+                if (state.phase === 'stimulus' && !state.isPaused) {
+                    handleUserChoice(null);
                 }
-            }, 1000);
+            }, state.trialTotalTime);
         }
+
+        function generateTrialContent() {
+            if (state.settings.customPairsJson && state.settings.customPairsJson.trim().length > 2) {
+                try {
+                    const customList = JSON.parse(state.settings.customPairsJson);
+                    if (Array.isArray(customList) && customList.length > 0) {
+                        const cp = customList[Math.floor(Math.random() * customList.length)];
+                        state.currentTrialData.rule = cp.rule || 'meaning';
+                        state.currentTrialData.left = cp.l;
+                        state.currentTrialData.right = cp.r;
+                        state.currentTrialData.isSame = cp.isSame;
+                        state.currentTrialData.isInverted = state.settings.inversion && (Math.random() < 0.25);
+                        state.currentTrialData.isAffective = false;
+                        return;
+                    }
+                } catch(e) {}
+            }
+
+            let availableRules = [];
+            if (state.settings.classicMode) availableRules.push('physical', 'meaning');
+            if (state.settings.multiMode) availableRules.push('synonym', 'category', 'partwhole', 'function', 'color');
+            if (availableRules.length === 0) availableRules = ['meaning'];
+
+            const rule = availableRules[Math.floor(Math.random() * availableRules.length)];
+            state.currentTrialData.rule = rule;
+
+            let isSame = Math.random() > 0.5;
+            let l = '', r = '';
+
+            const useAffective = state.settings.affectiveMode && (Math.random() < 0.5);
+            state.currentTrialData.isAffective = useAffective;
+
+            if (useAffective) {
+                const categories = Object.keys(AFFECTIVE_WORD_BANK);
+                const randomCat = categories[Math.floor(Math.random() * categories.length)];
+                const wordBank = AFFECTIVE_WORD_BANK[randomCat];
+                l = wordBank[Math.floor(Math.random() * wordBank.length)];
+                
+                if (isSame) {
+                    r = l;
+                } else {
+                    let differentCat = categories[Math.floor(Math.random() * categories.length)];
+                    let diffBank = AFFECTIVE_WORD_BANK[differentCat];
+                    r = diffBank[Math.floor(Math.random() * diffBank.length)];
+                    if (r === l) r = "VOID";
+                }
+            } else {
+                if (rule === 'physical') {
+                    if (isSame) {
+                        l = '7'; r = '7';
+                    } else {
+                        l = '7'; r = getNumWord(7, state.settings.language);
+                    }
+                } else if (rule === 'meaning') {
+                    const num = Math.floor(Math.random() * 9) + 1;
+                    l = num.toString();
+                    if (isSame) {
+                        r = getNumWord(num, state.settings.language);
+                    } else {
+                        let diffNum = (num % 9) + 1;
+                        r = getNumWord(diffNum, state.settings.language);
+                    }
+                } else if (rule === 'synonym') {
+                    const pairs = [
+                        {l: 'FAST', r: 'QUICK', same: true},
+                        {l: 'BIG', r: 'LARGE', same: true},
+                        {l: 'HAPPY', r: 'SAD', same: false},
+                        {l: 'SMART', r: 'BRIGHT', same: true}
+                    ];
+                    const p = pairs[Math.floor(Math.random() * pairs.length)];
+                    l = p.l; r = isSame ? p.r : (p.same ? 'SLOW' : 'HAPPY');
+                    isSame = (r === p.r ? p.same : !p.same);
+                } else if (rule === 'category') {
+                    const pairs = [
+                        {l: 'DOG', r: 'CAT', same: true},
+                        {l: 'APPLE', r: 'ORANGE', same: true},
+                        {l: 'CHAIR', r: 'BANANA', same: false},
+                        {l: 'EAGLE', r: 'SPARROW', same: true}
+                    ];
+                    const p = pairs[Math.floor(Math.random() * pairs.length)];
+                    l = p.l; r = isSame ? p.r : 'TRUCK';
+                    isSame = (r === p.r);
+                } else if (rule === 'partwhole') {
+                    const pairs = [
+                        {l: 'WHEEL', r: 'CAR', same: true},
+                        {l: 'BRANCH', r: 'TREE', same: true},
+                        {l: 'SCREEN', r: 'BOOK', same: false},
+                        {l: 'KEY', r: 'PIANO', same: true}
+                    ];
+                    const p = pairs[Math.floor(Math.random() * pairs.length)];
+                    l = p.l; r = isSame ? p.r : 'CLOUD';
+                    isSame = (r === p.r);
+                } else if (rule === 'function') {
+                    const pairs = [
+                        {l: 'DRINK', r: 'WATER', same: true},
+                        {l: 'WRITE', r: 'PEN', same: true},
+                        {l: 'SLEEP', r: 'KNIFE', same: false},
+                        {l: 'CUT', r: 'SCISSORS', same: true}
+                    ];
+                    const p = pairs[Math.floor(Math.random() * pairs.length)];
+                    l = p.l; r = isSame ? p.r : 'SHOE';
+                    isSame = (r === p.r);
+                } else if (rule === 'color') {
+                    const pairs = [
+                        {l: 'SKY', r: 'BLUE', same: true},
+                        {l: 'GRASS', r: 'GREEN', same: true},
+                        {l: 'FIRE', r: 'YELLOW', same: false},
+                        {l: 'SNOW', r: 'WHITE', same: true}
+                    ];
+                    const p = pairs[Math.floor(Math.random() * pairs.length)];
+                    l = p.l; r = isSame ? p.r : 'PURPLE';
+                    isSame = (r === p.r);
+                }
+            }
+
+            if (Math.random() > 0.5 && rule !== 'physical' && rule !== 'meaning' && !useAffective) {
+                let temp = l; l = r; r = temp;
+            }
+
+            state.currentTrialData.left = l;
+            state.currentTrialData.right = r;
+            state.currentTrialData.isSame = isSame;
+            state.currentTrialData.isInverted = state.settings.inversion && (Math.random() < 0.22);
+        }
+
+        function getNumWord(n, lang) {
+            if (lang === 'es') {
+                const words = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
+                return words[n] || 'UNO';
+            } else if (lang === 'zh') {
+                const words = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+                return words[n] || '一';
+            } else {
+                const words = ['', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
+                return words[n] || 'ONE';
+            }
+        }
+
+        function triggerVisualFlash(isCorrect) {
+            const overlay = document.getElementById('flash-overlay');
+            const className = isCorrect ? 'flash-correct' : 'flash-wrong';
+            overlay.classList.add(className);
+            setTimeout(() => {
+                overlay.classList.remove(className);
+            }, 300);
+        }
+
+        function handleUserChoice(userGuessedSame) {
+            if (state.phase !== 'stimulus' || state.isPaused || state.inputLocked) return;
+            
+            state.inputLocked = true;
+            clearTimers();
+
+            const timedOut = (userGuessedSame === null);
+            let targetIsSame = state.currentTrialData.isSame;
+            if (state.currentTrialData.isInverted) {
+                targetIsSame = !targetIsSame;
+            }
+
+            const correct = !timedOut && (userGuessedSame === targetIsSame);
+
+            state.totalCount++;
+
+            if (correct) {
+                state.correctCount++;
+                state.consecutiveErrors = 0;
+                playTone(true);
+                triggerVisualFlash(true);
+            } else {
+                state.consecutiveErrors++;
+                playTone(false);
+                triggerVisualFlash(false);
+            }
+
+            const accuracy = Math.round((state.correctCount / state.totalCount) * 100);
+            statAcc.textContent = `${accuracy}%`;
+
+            if (state.settings.trainingMode === 'adaptive' && state.consecutiveErrors >= 3) {
+                let idx = ALL_LEVELS.indexOf(state.level);
+                if (idx > 0) {
+                    state.level = ALL_LEVELS[idx - 1];
+                }
+                state.consecutiveErrors = 0;
+                statLevel.textContent = state.level;
+            }
+
+            setTimeout(() => {
+                nextTrial();
+            }, 550);
+        }
+
+        sameBtn.addEventListener('click', () => handleUserChoice(true));
+        diffBtn.addEventListener('click', () => handleUserChoice(false));
+        readyBtn.addEventListener('click', advanceToStimulus);
+
+        function endSession() {
+            state.phase = 'dashboard';
+            btnPause.classList.add('hidden');
+            trainingContainer.classList.add('hidden');
+
+            const errors = state.totalCount - state.correctCount;
+            let levelMessage = `Current Level: <strong>${state.level}</strong>`;
+
+            if (state.settings.trainingMode === 'adaptive') {
+                if (errors <= 3) {
+                    let idx = ALL_LEVELS.indexOf(state.level);
+                    if (idx !== -1 && idx < ALL_LEVELS.length - 1) {
+                        state.level = ALL_LEVELS[idx + 1];
+                        levelMessage = `Current Level: <strong>${state.level}</strong> <span style="color:var(--success); font-weight:bold;">(Level Up!)</span>`;
+                    }
+                }
+            }
+
+            if (state.level > state.maxLevelReached) state.maxLevelReached = state.level;
+            
+            state.lifetimeStats.totalSessions++;
+            state.lifetimeStats.totalTrials += state.totalCount;
+            state.lifetimeStats.totalCorrect += state.correctCount;
+
+            const today = getTodayKey();
+            if (!state.lifetimeStats.dailyLogs) {
+                state.lifetimeStats.dailyLogs = {};
+            }
+            state.lifetimeStats.dailyLogs[today] = (state.lifetimeStats.dailyLogs[today] || 0) + 1;
+            
+            saveStorage();
+
+            const finalAcc = state.totalCount > 0 ? Math.round((state.correctCount / state.totalCount) * 100) : 0;
+            summaryStatsText.innerHTML = `Session complete!<br><br>Accuracy: <strong>${finalAcc}%</strong> (${errors} errors)<br>${levelMessage}<br>Max Level Reached: <strong>${state.maxLevelReached}</strong>`;
+            summaryModal.classList.remove('hidden');
+        }
+
+        loadStorage();
     </script>
 </body>
 </html>
