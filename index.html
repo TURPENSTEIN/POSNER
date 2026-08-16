@@ -32,6 +32,15 @@
             display: flex;
             flex-direction: column;
             overflow-x: hidden;
+            transition: background-color 0.3s ease;
+        }
+
+        body.flash-correct {
+            background-color: rgba(34, 197, 94, 0.15);
+        }
+
+        body.flash-wrong {
+            background-color: rgba(239, 68, 68, 0.15);
         }
 
         header {
@@ -47,6 +56,7 @@
             font-size: 1.25rem;
             font-weight: 700;
             color: var(--accent);
+            cursor: pointer;
         }
 
         .stats-bar {
@@ -106,8 +116,8 @@
             border: 1px solid var(--border);
             border-radius: 1rem;
             width: 100%;
-            max-width: 650px;
-            min-height: 420px;
+            max-width: 700px;
+            min-height: 450px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -120,10 +130,28 @@
         .cue-text {
             font-size: 1.25rem;
             color: var(--accent);
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             font-weight: 600;
+        }
+
+        /* Timer progress bar for trial window */
+        .trial-timer-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-color);
+            border-radius: 3px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .trial-timer-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 100%;
+            transition: width linear;
         }
 
         .stimulus-container {
@@ -155,6 +183,84 @@
             padding: 1rem;
             font-size: 1rem;
             font-weight: 600;
+        }
+
+        /* Dashboard & Screens */
+        .screen {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            align-items: center;
+            width: 100%;
+        }
+
+        .screen h1 {
+            font-size: 1.75rem;
+        }
+
+        .screen p {
+            color: var(--text-muted);
+            line-height: 1.5;
+            font-size: 0.95rem;
+            max-width: 500px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            width: 100%;
+            margin: 1rem 0;
+        }
+
+        .dash-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            text-align: left;
+        }
+
+        .dash-card h3 {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .dash-card .stat-val {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        /* Modal Popups */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+
+        .modal-content {
+            background: var(--surface-color);
+            border: 1px solid var(--border);
+            padding: 2.5rem;
+            border-radius: 1rem;
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
         }
 
         .overlay-panel {
@@ -200,7 +306,7 @@
             padding: 1rem;
             display: flex;
             flex-direction: column;
-            gap: 0.75srem;
+            gap: 0.75rem;
         }
 
         .setting-card label {
@@ -285,29 +391,10 @@
             100% { opacity: 1; }
         }
 
-        .welcome-screen {
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
-            align-items: center;
-            max-width: 500px;
-        }
-
-        .welcome-screen h1 {
-            font-size: 1.75rem;
-        }
-
-        .welcome-screen p {
-            color: var(--text-muted);
-            line-height: 1.5;
-            font-size: 0.95rem;
-        }
-
         .trial-counter {
             font-size: 0.85rem;
             color: var(--text-muted);
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
             text-transform: uppercase;
             letter-spacing: 0.1em;
         }
@@ -329,28 +416,54 @@
 <body>
 
     <header>
-        <div class="logo">Long Term Memory Recall</div>
+        <div class="logo" id="nav-logo">Long Term Memory Recall</div>
         <div class="stats-bar">
             <div class="stat-item">Level: <span id="stat-level">1</span></div>
             <div class="stat-item">Accuracy: <span id="stat-acc">100%</span></div>
             <div class="stat-item">Trial: <span id="stat-trial">0/32</span></div>
         </div>
         <div class="nav-buttons">
+            <button id="btn-dashboard">Dashboard</button>
             <button id="btn-settings">Settings</button>
         </div>
     </header>
 
     <main>
         <div class="stage" id="game-stage">
+            <!-- Dashboard Screen -->
+            <div class="screen" id="dashboard-screen">
+                <h1>Training Dashboard</h1>
+                <p>Track your cognitive performance metrics across sessions.</p>
+                <div class="dashboard-grid">
+                    <div class="dash-card">
+                        <h3>Total Sessions</h3>
+                        <div class="stat-val" id="dash-sessions">0</div>
+                    </div>
+                    <div class="dash-card">
+                        <h3>Lifetime Accuracy</h3>
+                        <div class="stat-val" id="dash-accuracy">0%</div>
+                    </div>
+                    <div class="dash-card">
+                        <h3>Current Level</h3>
+                        <div class="stat-val" id="dash-level">1</div>
+                    </div>
+                    <div class="dash-card">
+                        <h3>Total Trials Completed</h3>
+                        <div class="stat-val" id="dash-trials">0</div>
+                    </div>
+                </div>
+                <button class="primary" id="btn-start-from-dash" style="padding: 0.75rem 2rem; font-size: 1rem;">Start New Session (Spacebar)</button>
+            </div>
+
             <!-- Welcome / Instructions Screen -->
-            <div class="welcome-screen" id="welcome-screen">
+            <div class="screen hidden" id="welcome-screen">
                 <h1>Posner Mixed Task Training</h1>
-                <p>Train how quickly your brain looks up facts and meanings. You will see a cue (e.g. Physical or Meaning), followed by a pair of items. Judge whether they match according to the rule!</p>
-                <button class="primary" id="btn-start" style="padding: 0.75rem 2rem; font-size: 1rem;">Start Session</button>
+                <p>Train how quickly your brain looks up facts and meanings. You will see a cue, followed by a pair of items. Judge whether they match before the timer runs out!</p>
+                <button class="primary" id="btn-start" style="padding: 0.75rem 2rem; font-size: 1rem;">Start Session (Press Space)</button>
             </div>
 
             <!-- Rule / Fixation Screen -->
-            <div class="welcome-screen hidden" id="rule-screen">
+            <div class="screen hidden" id="rule-screen">
                 <div class="trial-counter" id="rule-trial-counter">Trial 1 of 32</div>
                 <div class="cue-text" id="rule-cue-box" style="font-size: 1.75rem;">Rule: MEANING</div>
                 <p id="rule-instruction-hint">Get ready...</p>
@@ -358,8 +471,11 @@
             </div>
 
             <!-- Active Training Screen -->
-            <div class="training-container hidden" id="training-container">
+            <div class="screen hidden" id="training-container">
                 <div class="trial-counter" id="game-trial-counter">Trial 1 of 32</div>
+                <div class="trial-timer-bar">
+                    <div class="trial-timer-fill" id="timer-fill"></div>
+                </div>
                 <div class="cue-text" id="cue-display">Rule: Meaning</div>
                 <div class="stimulus-container">
                     <div class="stimulus-box" id="stimulus-left">4</div>
@@ -370,15 +486,17 @@
                     <button id="btn-diff">Different (<span id="lbl-key-diff">D</span>)</button>
                 </div>
             </div>
-
-            <!-- Session Summary Screen -->
-            <div class="welcome-screen hidden" id="summary-screen">
-                <h1>Session Complete!</h1>
-                <p id="summary-stats-text">Great job maintaining your cognitive pacing.</p>
-                <button class="primary" id="btn-restart">Start New Session</button>
-            </div>
         </div>
     </main>
+
+    <!-- Post-Session Summary Modal Popup -->
+    <div class="modal-overlay hidden" id="summary-modal">
+        <div class="modal-content">
+            <h1>Session Complete!</h1>
+            <p id="summary-stats-text">Great job maintaining your cognitive pacing.</p>
+            <button class="primary" id="btn-modal-close">Return to Dashboard</button>
+        </div>
+    </div>
 
     <!-- Settings Panel -->
     <div class="overlay-panel" id="settings-panel">
@@ -426,9 +544,7 @@
             <!-- Difficulty Level Selection -->
             <div class="setting-card" id="manual-level-card">
                 <label>Select Starting / Fixed Difficulty Level (1 - 10)</label>
-                <div class="level-grid" id="level-grid">
-                    <!-- Populated dynamically -->
-                </div>
+                <div class="level-grid" id="level-grid"></div>
             </div>
 
             <!-- Keybindings -->
@@ -454,13 +570,19 @@
             totalCount: 0,
             currentTrialIndex: 0,
             maxTrials: 32,
-            isRunning: false,
-            phase: 'welcome', // welcome, rule, stimulus, summary
+            phase: 'dashboard', // dashboard, welcome, rule, stimulus
             autoAdvanceTimer: null,
+            trialTimeout: null,
+            timerInterval: null,
+            lifetimeStats: {
+                totalSessions: 0,
+                totalTrials: 0,
+                totalCorrect: 0
+            },
             settings: {
-                trainingMode: 'progressive', // 'progressive' or 'manual'
+                trainingMode: 'progressive',
                 multiMode: false,
-                autoAdvanceDelay: 1, // in seconds, 0 means manual
+                autoAdvanceDelay: 1,
                 soundEnabled: true,
                 fixedLevel: 5,
                 sameKey: 'KeyS',
@@ -486,26 +608,28 @@
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.type = success ? 'sine' : 'sawtooth';
-                osc.frequency.setValueAtTime(success ? 587.33 : 220, audioCtx.currentTime); // D5 vs A3
+                osc.frequency.setValueAtTime(success ? 587.33 : 220, audioCtx.currentTime);
                 gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 osc.start();
                 osc.stop(audioCtx.currentTime + 0.15);
-            } catch(e) {
-                // Audio context policy fallback
-            }
+            } catch(e) {}
         }
 
         // DOM Elements
+        const dashboardScreen = document.getElementById('dashboard-screen');
         const welcomeScreen = document.getElementById('welcome-screen');
         const ruleScreen = document.getElementById('rule-screen');
         const trainingContainer = document.getElementById('training-container');
-        const summaryScreen = document.getElementById('summary-screen');
+        const summaryModal = document.getElementById('summary-modal');
 
+        const navLogo = document.getElementById('nav-logo');
+        const btnDashboard = document.getElementById('btn-dashboard');
         const startBtn = document.getElementById('btn-start');
-        const restartBtn = document.getElementById('btn-restart');
+        const startFromDashBtn = document.getElementById('btn-start-from-dash');
+        const btnModalClose = document.getElementById('btn-modal-close');
         const readyBtn = document.getElementById('btn-ready');
         const settingsBtn = document.getElementById('btn-settings');
         const closeSettingsBtn = document.getElementById('btn-close-settings');
@@ -519,6 +643,7 @@
         const cueDisplay = document.getElementById('cue-display');
         const stimulusLeft = document.getElementById('stimulus-left');
         const stimulusRight = document.getElementById('stimulus-right');
+        const timerFill = document.getElementById('timer-fill');
         const sameBtn = document.getElementById('btn-same');
         const diffBtn = document.getElementById('btn-diff');
         const lblKeySame = document.getElementById('lbl-key-same');
@@ -531,14 +656,17 @@
         const settingAutoAdvance = document.getElementById('setting-auto-advance');
         const settingSound = document.getElementById('setting-sound');
         const levelGrid = document.getElementById('level-grid');
-        const manualLevelCard = document.getElementById('manual-level-card');
 
         const statLevel = document.getElementById('stat-level');
         const statAcc = document.getElementById('stat-acc');
         const statTrial = document.getElementById('stat-trial');
         const summaryStatsText = document.getElementById('summary-stats-text');
 
-        // Build Level Grid buttons (1 to 10 with half steps)
+        const dashSessions = document.getElementById('dash-sessions');
+        const dashAccuracy = document.getElementById('dash-accuracy');
+        const dashLevel = document.getElementById('dash-level');
+        const dashTrials = document.getElementById('dash-trials');
+
         function buildLevelGrid() {
             levelGrid.innerHTML = '';
             const levels = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
@@ -559,7 +687,6 @@
             });
         }
 
-        // Storage Management
         function loadStorage() {
             const saved = localStorage.getItem('posner_trainer_settings');
             if (saved) {
@@ -573,12 +700,26 @@
                     state.level = state.settings.fixedLevel;
                 }
             }
+            const savedStats = localStorage.getItem('posner_lifetime_stats');
+            if (savedStats) {
+                state.lifetimeStats = JSON.parse(savedStats);
+            }
             statLevel.textContent = state.level;
+            updateDashboardDisplay();
             buildLevelGrid();
         }
 
         function saveStorage() {
             localStorage.setItem('posner_trainer_settings', JSON.stringify(state.settings));
+            localStorage.setItem('posner_lifetime_stats', JSON.stringify(state.lifetimeStats));
+        }
+
+        function updateDashboardDisplay() {
+            dashSessions.textContent = state.lifetimeStats.totalSessions;
+            const lifetimeAcc = state.lifetimeStats.totalTrials > 0 ? Math.round((state.lifetimeStats.totalCorrect / state.lifetimeStats.totalTrials) * 100) : 0;
+            dashAccuracy.textContent = `${lifetimeAcc}%`;
+            dashLevel.textContent = state.level;
+            dashTrials.textContent = state.lifetimeStats.totalTrials;
         }
 
         function updateKeybindLabels() {
@@ -620,8 +761,25 @@
                 return;
             }
 
-            // Handle Space to advance rule screen if manual advance is chosen
-            if (state.phase === 'rule' && state.settings.autoAdvanceDelay == 0 && (e.code === 'Space' || e.code === state.settings.sameKey || e.code === state.settings.diffKey)) {
+            // Global Spacebar initiation for Dashboard / Welcome screens
+            if (e.code === 'Space') {
+                if (state.phase === 'dashboard') {
+                    e.preventDefault();
+                    startSession();
+                    return;
+                } else if (state.phase === 'welcome') {
+                    e.preventDefault();
+                    beginTrialsSequence();
+                    return;
+                } else if (state.phase === 'rule' && state.settings.autoAdvanceDelay == 0) {
+                    e.preventDefault();
+                    advanceToStimulus();
+                    return;
+                }
+            }
+
+            // Handle Space / Keybind to advance rule screen manually
+            if (state.phase === 'rule' && state.settings.autoAdvanceDelay == 0 && (e.code === state.settings.sameKey || e.code === state.settings.diffKey)) {
                 e.preventDefault();
                 advanceToStimulus();
                 return;
@@ -637,9 +795,11 @@
             }
         });
 
-        // Settings Event Listeners
+        // Navigation & Screen Management
         settingsBtn.addEventListener('click', () => settingsPanel.classList.add('open'));
         closeSettingsBtn.addEventListener('click', () => settingsPanel.classList.remove('open'));
+        navLogo.addEventListener('click', showDashboard);
+        btnDashboard.addEventListener('click', showDashboard);
 
         settingTrainingMode.addEventListener('change', (e) => {
             state.settings.trainingMode = e.target.value;
@@ -665,30 +825,56 @@
             saveStorage();
         });
 
-        // Session Flow Control
-        startBtn.addEventListener('click', startSession);
-        restartBtn.addEventListener('click', startSession);
-        readyBtn.addEventListener('click', advanceToStimulus);
+        function showDashboard() {
+            clearTimers();
+            state.phase = 'dashboard';
+            dashboardScreen.classList.remove('hidden');
+            welcomeScreen.classList.add('hidden');
+            ruleScreen.classList.add('hidden');
+            trainingContainer.classList.add('hidden');
+            summaryModal.classList.add('hidden');
+            updateDashboardDisplay();
+        }
+
+        startBtn.addEventListener('click', beginTrialsSequence);
+        startFromDashBtn.addEventListener('click', startSession);
+        btnModalClose.addEventListener('click', () => {
+            summaryModal.classList.add('hidden');
+            showDashboard();
+        });
 
         function startSession() {
+            dashboardScreen.classList.add('hidden');
+            welcomeScreen.classList.remove('hidden');
+            state.phase = 'welcome';
+            settingsPanel.classList.remove('open');
+        }
+
+        function beginTrialsSequence() {
             state.currentTrialIndex = 0;
             state.correctCount = 0;
             state.totalCount = 0;
             if (state.settings.trainingMode === 'manual') {
                 state.level = state.settings.fixedLevel;
             } else {
-                state.level = 1; // Start progressive at level 1
+                state.level = 1;
             }
             statLevel.textContent = state.level;
             
             welcomeScreen.classList.add('hidden');
-            summaryScreen.classList.add('hidden');
-            settingsPanel.classList.remove('open');
+            summaryModal.classList.add('hidden');
             
             nextTrial();
         }
 
+        function clearTimers() {
+            clearTimeout(state.autoAdvanceTimer);
+            clearTimeout(state.trialTimeout);
+            clearInterval(state.timerInterval);
+        }
+
         function nextTrial() {
+            clearTimers();
             if (state.currentTrialIndex >= state.maxTrials) {
                 endSession();
                 return;
@@ -699,10 +885,8 @@
             ruleTrialCounter.textContent = `Trial ${state.currentTrialIndex} of ${state.maxTrials}`;
             gameTrialCounter.textContent = `Trial ${state.currentTrialIndex} of ${state.maxTrials}`;
 
-            // Generate Trial Stimulus & Rule
             generateTrialContent();
 
-            // Show Rule Screen First
             state.phase = 'rule';
             ruleScreen.classList.remove('hidden');
             trainingContainer.classList.add('hidden');
@@ -712,7 +896,6 @@
             if (state.settings.autoAdvanceDelay > 0) {
                 ruleInstructionHint.textContent = `Proceeding in ${state.settings.autoAdvanceDelay}s...`;
                 readyBtn.classList.add('hidden');
-                clearTimeout(state.autoAdvanceTimer);
                 state.autoAdvanceTimer = setTimeout(() => {
                     if (state.phase === 'rule') {
                         advanceToStimulus();
@@ -733,10 +916,30 @@
             cueDisplay.textContent = `Rule: ${state.currentTrialData.rule.toUpperCase()}`;
             stimulusLeft.textContent = state.currentTrialData.left;
             stimulusRight.textContent = state.currentTrialData.right;
+
+            // Calculate response window based on current level (Higher level = less response time, e.g., 4s down to 1.2s)
+            const responseWindowMs = Math.max(1200, 4200 - (state.level * 300));
+            
+            // Start countdown bar animation
+            let startTime = Date.now();
+            timerFill.style.transition = 'none';
+            timerFill.style.width = '100%';
+            
+            // Trigger reflow
+            void timerFill.offsetWidth;
+            
+            timerFill.style.transition = `width ${responseWindowMs}ms linear`;
+            timerFill.style.width = '0%';
+
+            // Handle trial timeout (missed answer)
+            state.trialTimeout = setTimeout(() => {
+                if (state.phase === 'stimulus') {
+                    handleUserChoice(null); // Null signifies timeout/missed
+                }
+            }, responseWindowMs);
         }
 
         function generateTrialContent() {
-            // Rules: 'physical' or 'meaning' (plus semantic if multi-mode)
             const rules = state.settings.multiMode ? ['physical', 'meaning', 'semantic'] : ['physical', 'meaning'];
             const rule = rules[Math.floor(Math.random() * rules.length)];
             state.currentTrialData.rule = rule;
@@ -745,16 +948,6 @@
             state.currentTrialData.isSame = isSame;
 
             if (rule === 'physical') {
-                // e.g., digit vs digit or word vs word
-                const pairs = [
-                    { l: '4', r: '4', same: true },
-                    { l: 'FOUR', r: 'FOUR', same: true },
-                    { l: '7', r: '9', same: false },
-                    { l: 'THREE', r: 'FIVE', same: false },
-                    { l: '2', r: 'SEVEN', same: false }
-                ];
-                const chosen = pairs[Math.floor(Math.random() * pairs.length)];
-                // Force match target if needed
                 if (isSame) {
                     state.currentTrialData.left = '4';
                     state.currentTrialData.right = '4';
@@ -763,7 +956,6 @@
                     state.currentTrialData.right = 'FOUR';
                 }
             } else if (rule === 'meaning') {
-                // e.g., digit paired with word representation of number
                 const numPairs = [
                     { d: '2', w: 'TWO' },
                     { d: '4', w: 'FOUR' },
@@ -780,7 +972,6 @@
                     state.currentTrialData.right = p2.w;
                 }
             } else {
-                // Semantic relationships (Multi Mode)
                 const semanticPairs = [
                     { l: 'APPLE', r: 'FRUIT', same: true },
                     { l: 'DOG', r: 'ANIMAL', same: true },
@@ -794,45 +985,64 @@
             }
         }
 
+        function triggerVisualFlash(isCorrect) {
+            const className = isCorrect ? 'flash-correct' : 'flash-wrong';
+            document.body.classList.add(className);
+            setTimeout(() => {
+                document.body.classList.remove(className);
+            }, 300);
+        }
+
         function handleUserChoice(userGuessedSame) {
             if (state.phase !== 'stimulus') return;
+            clearTimers();
+
+            // userGuessedSame === null means timeout/missed answer
+            const timedOut = (userGuessedSame === null);
+            const correct = !timedOut && (userGuessedSame === state.currentTrialData.isSame);
 
             state.totalCount++;
-            const correct = (userGuessedSame === state.currentTrialData.isSame);
             if (correct) {
                 state.correctCount++;
                 playTone(true);
+                triggerVisualFlash(true);
             } else {
                 playTone(false);
+                triggerVisualFlash(false);
             }
 
-            // Update stats display
             const accuracy = Math.round((state.correctCount / state.totalCount) * 100);
             statAcc.textContent = `${accuracy}%`;
 
-            // Adaptive difficulty adjustment if in progressive mode
             if (state.settings.trainingMode === 'progressive') {
                 if (correct && state.level < 10) state.level = Math.min(10, +(state.level + 0.1).toFixed(1));
                 else if (!correct && state.level > 1) state.level = Math.max(1, +(state.level - 0.2).toFixed(1));
                 statLevel.textContent = state.level;
             }
 
-            // Proceed to next trial after short pause
+            // Pause briefly to show color flash feedback, then proceed to next trial
             setTimeout(() => {
                 nextTrial();
-            }, 300);
+            }, 600);
         }
 
         sameBtn.addEventListener('click', () => handleUserChoice(true));
         diffBtn.addEventListener('click', () => handleUserChoice(false));
+        readyBtn.addEventListener('click', advanceToStimulus);
 
         function endSession() {
-            state.phase = 'summary';
+            state.phase = 'dashboard';
             trainingContainer.classList.add('hidden');
-            summaryScreen.classList.remove('hidden');
+
+            // Update lifetime analytics
+            state.lifetimeStats.totalSessions++;
+            state.lifetimeStats.totalTrials += state.totalCount;
+            state.lifetimeStats.totalCorrect += state.correctCount;
+            saveStorage();
 
             const finalAcc = state.totalCount > 0 ? Math.round((state.correctCount / state.totalCount) * 100) : 0;
-            summaryStatsText.innerHTML = `You completed all 32 trials with an overall accuracy of <strong>${finalAcc}%</strong>. Consistency over time builds faster memory retrieval!`;
+            summaryStatsText.innerHTML = `You completed all 32 trials!<br><br>Overall Accuracy: <strong>${finalAcc}%</strong><br>Current Level: <strong>${state.level}</strong>`;
+            summaryModal.classList.remove('hidden');
         }
 
         // Initialize App on load
