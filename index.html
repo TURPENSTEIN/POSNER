@@ -32,15 +32,31 @@
             display: flex;
             flex-direction: column;
             overflow-x: hidden;
-            transition: background-color 0.3s ease;
         }
 
-        body.flash-correct {
-            background-color: rgba(34, 197, 94, 0.15);
+        /* Dedicated Flash Overlay for distinct colors */
+        #flash-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
         }
 
-        body.flash-wrong {
-            background-color: rgba(239, 68, 68, 0.15);
+        #flash-overlay.flash-correct {
+            background-color: rgba(34, 197, 94, 0.35); /* Distinct Green */
+            opacity: 1;
+            transition: none; /* Instant flash, smooth fade out */
+        }
+
+        #flash-overlay.flash-wrong {
+            background-color: rgba(239, 68, 68, 0.4); /* Distinct Red */
+            opacity: 1;
+            transition: none;
         }
 
         header {
@@ -130,33 +146,16 @@
         .cue-text {
             font-size: 1.25rem;
             color: var(--accent);
-            margin-bottom: 1rem;
+            margin-bottom: 2.5rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             font-weight: 600;
         }
 
-        .trial-timer-bar {
-            width: 100%;
-            height: 6px;
-            background: var(--bg-color);
-            border-radius: 3px;
-            margin-bottom: 1.5rem;
-            overflow: hidden;
-            border: 1px solid var(--border);
-        }
-
-        .trial-timer-fill {
-            height: 100%;
-            background: var(--accent);
-            width: 100%;
-            transition: width linear;
-        }
-
         .stimulus-container {
             display: flex;
             gap: 2rem;
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
             position: relative;
             width: 100%;
             justify-content: center;
@@ -433,6 +432,9 @@
 </head>
 <body>
 
+    <!-- Dedicated flash overlay for correct/wrong feedback -->
+    <div id="flash-overlay"></div>
+
     <header>
         <div class="logo" id="nav-logo">Semantic LTMR Pro</div>
         <div class="stats-bar">
@@ -491,9 +493,7 @@
             <!-- Active Training Screen -->
             <div class="screen hidden" id="training-container">
                 <div class="trial-counter" id="game-trial-counter">Trial 1 of 32</div>
-                <div class="trial-timer-bar">
-                    <div class="trial-timer-fill" id="timer-fill"></div>
-                </div>
+                <!-- Removed Timer Bar -->
                 <div class="cue-text" id="cue-display">Rule: Meaning</div>
                 <div class="stimulus-container" id="stimulus-placement-area">
                     <div class="stimulus-box" id="stimulus-left">4</div>
@@ -621,7 +621,7 @@
             phase: 'dashboard',
             autoAdvanceTimer: null,
             trialTimeout: null,
-            recentAccWindow: [], // For Hyper-Adaptive tracking (~85% target)
+            recentAccWindow: [],
             lifetimeStats: {
                 totalSessions: 0,
                 totalTrials: 0,
@@ -697,7 +697,9 @@
         const stimulusPlacementArea = document.getElementById('stimulus-placement-area');
         const stimulusLeft = document.getElementById('stimulus-left');
         const stimulusRight = document.getElementById('stimulus-right');
-        const timerFill = document.getElementById('timer-fill');
+        
+        // Removed timerFill reference
+        
         const sameBtn = document.getElementById('btn-same');
         const diffBtn = document.getElementById('btn-diff');
         const lblKeySame = document.getElementById('lbl-key-same');
@@ -1017,18 +1019,9 @@
                 stimulusRight.classList.remove('inverted-rule');
             }
 
-            // Granular timing curve: Higher levels reduce time more smoothly with plateaus around level 8-9
-            // Level 1 = ~4200ms, Level 8 = ~1800ms, Level 10 = ~1200ms
             const baseTime = 4500 - (Math.pow(state.level, 1.15) * 310);
             const responseWindowMs = Math.max(1100, Math.round(baseTime));
             
-            let startTime = Date.now();
-            timerFill.style.transition = 'none';
-            timerFill.style.width = '100%';
-            void timerFill.offsetWidth;
-            timerFill.style.transition = `width ${responseWindowMs}ms linear`;
-            timerFill.style.width = '0%';
-
             state.trialTimeout = setTimeout(() => {
                 if (state.phase === 'stimulus') {
                     handleUserChoice(null);
@@ -1037,7 +1030,6 @@
         }
 
         function generateTrialContent() {
-            // Check custom pairs first if provided
             if (state.settings.customPairsJson && state.settings.customPairsJson.trim().length > 2) {
                 try {
                     const customList = JSON.parse(state.settings.customPairsJson);
@@ -1063,7 +1055,6 @@
 
             let isSame = Math.random() > 0.5;
 
-            // Scramble pairs to prevent order memorization (e.g., Cat-Dog vs Dog-Cat)
             let l = '', r = '';
 
             if (rule === 'physical') {
@@ -1133,7 +1124,6 @@
                 isSame = (r === p.r);
             }
 
-            // Scramble order sometimes
             if (Math.random() > 0.5 && rule !== 'physical' && rule !== 'meaning') {
                 let temp = l; l = r; r = temp;
             }
@@ -1158,10 +1148,11 @@
         }
 
         function triggerVisualFlash(isCorrect) {
+            const overlay = document.getElementById('flash-overlay');
             const className = isCorrect ? 'flash-correct' : 'flash-wrong';
-            document.body.classList.add(className);
+            overlay.classList.add(className);
             setTimeout(() => {
-                document.body.classList.remove(className);
+                overlay.classList.remove(className);
             }, 300);
         }
 
@@ -1172,7 +1163,7 @@
             const timedOut = (userGuessedSame === null);
             let targetIsSame = state.currentTrialData.isSame;
             if (state.currentTrialData.isInverted) {
-                targetIsSame = !targetIsSame; // Invert logic rule for Go/No-Go
+                targetIsSame = !targetIsSame;
             }
 
             const correct = !timedOut && (userGuessedSame === targetIsSame);
@@ -1194,11 +1185,10 @@
             statAcc.textContent = `${accuracy}%`;
 
             if (state.settings.trainingMode === 'hyper') {
-                // Hyper-Adaptive calculation targeting ~85% accuracy with granular steps near level 8-9 plateaus
                 const recentSum = state.recentAccWindow.reduce((a, b) => a + b, 0);
                 const recentRate = state.recentAccWindow.length > 0 ? (recentSum / state.recentAccWindow.length) : 0.85;
                 
-                let step = state.level >= 8 ? 0.05 : 0.15; // Granular micro-steps to push through plateaus
+                let step = state.level >= 8 ? 0.05 : 0.15;
                 if (recentRate >= 0.85 && state.level < 10) {
                     state.level = Math.min(10, +(state.level + step).toFixed(2));
                 } else if (recentRate < 0.75 && state.level > 1) {
