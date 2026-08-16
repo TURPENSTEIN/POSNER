@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Semantic LTMR - Posner Mixed Task Pro</title>
+    <title>Semantic LTMR - Posner Mixed Task</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -441,8 +441,9 @@
     <div id="flash-overlay"></div>
 
     <header>
-        <div class="logo" id="nav-logo">Semantic LTMR Pro</div>
+        <div class="logo" id="nav-logo">Semantic LTMR</div>
         <div class="stats-bar">
+            <div class="stat-item">Today: <span id="stat-daily-sessions">0</span></div>
             <div class="stat-item">Level: <span id="stat-level">1</span></div>
             <div class="stat-item">Accuracy: <span id="stat-acc">100%</span></div>
             <div class="stat-item">Trial: <span id="stat-trial">0/32</span></div>
@@ -462,6 +463,10 @@
                 <p>Train rapid semantic lookup, inhibition control, and peripheral vigilance without sub-vocalization crutches.</p>
                 <div class="dashboard-grid">
                     <div class="dash-card">
+                        <h3>Today's Sessions</h3>
+                        <div class="stat-val" id="dash-daily-sessions">0</div>
+                    </div>
+                    <div class="dash-card">
                         <h3>Total Sessions</h3>
                         <div class="stat-val" id="dash-sessions">0</div>
                     </div>
@@ -473,17 +478,13 @@
                         <h3>Max Level Achieved</h3>
                         <div class="dash-card-val"><div class="stat-val" id="dash-level">1</div></div>
                     </div>
-                    <div class="dash-card">
-                        <h3>Total Trials Completed</h3>
-                        <div class="stat-val" id="dash-trials">0</div>
-                    </div>
                 </div>
                 <button class="primary" id="btn-start-from-dash" style="padding: 0.75rem 2rem; font-size: 1rem;">Start Session (Press Spacebar)</button>
             </div>
 
             <!-- Welcome Screen -->
             <div class="screen hidden" id="welcome-screen">
-                <h1>Posner Mixed Task Pro</h1>
+                <h1>Posner Mixed Task</h1>
                 <p>Rapidly judge stimulus relations according to the active rule. Pacing is continuous to force instant retrieval intuition. Misses or wrong answers incur a red error flash.</p>
                 <button class="primary" id="btn-start" style="padding: 0.75rem 2rem; font-size: 1rem;">Start Session (Press Space)</button>
             </div>
@@ -531,7 +532,7 @@
     <!-- Settings Panel -->
     <div class="overlay-panel" id="settings-panel">
         <div class="panel-header">
-            <h3>Pro Tool Settings</h3>
+            <h3>Tool Settings</h3>
             <button id="btn-close-settings">Close</button>
         </div>
         <div class="panel-content">
@@ -557,7 +558,7 @@
                 </div>
                 <div class="checkbox-row" style="margin-top: 0.5rem;">
                     <input type="checkbox" id="setting-affective-mode">
-                    <span>Affective / eWMTurp Mode (Emotional interference & valence)</span>
+                    <span>Affective / Emotional Mode (Emotional interference & valence)</span>
                 </div>
             </div>
 
@@ -734,7 +735,8 @@
             lifetimeStats: {
                 totalSessions: 0,
                 totalTrials: 0,
-                totalCorrect: 0
+                totalCorrect: 0,
+                dailyLogs: {} // { "YYYY-MM-DD": count }
             },
             settings: {
                 trainingMode: 'adaptive',
@@ -835,12 +837,29 @@
         const statLevel = document.getElementById('stat-level');
         const statAcc = document.getElementById('stat-acc');
         const statTrial = document.getElementById('stat-trial');
+        const statDailySessions = document.getElementById('stat-daily-sessions');
         const summaryStatsText = document.getElementById('summary-stats-text');
 
         const dashSessions = document.getElementById('dash-sessions');
+        const dashDailySessions = document.getElementById('dash-daily-sessions');
         const dashAccuracy = document.getElementById('dash-accuracy');
         const dashLevel = document.getElementById('dash-level');
-        const dashTrials = document.getElementById('dash-trials');
+
+        function getTodayKey() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function getTodaySessionsCount() {
+            const today = getTodayKey();
+            if (!state.lifetimeStats.dailyLogs) {
+                state.lifetimeStats.dailyLogs = {};
+            }
+            return state.lifetimeStats.dailyLogs[today] || 0;
+        }
 
         function buildLevelGrid() {
             levelGrid.innerHTML = '';
@@ -849,7 +868,6 @@
                 btn.className = `level-btn ${state.level === lvl ? 'active' : ''}`;
                 btn.textContent = lvl;
                 btn.addEventListener('click', () => {
-                    // Clicking a level sets the starting level for the session immediately, even in adaptive mode.
                     state.level = lvl;
                     statLevel.textContent = lvl;
                     saveStorage();
@@ -880,6 +898,9 @@
             const savedStats = localStorage.getItem('sem_ltmr_stats');
             if (savedStats) {
                 state.lifetimeStats = JSON.parse(savedStats);
+                if (!state.lifetimeStats.dailyLogs) {
+                    state.lifetimeStats.dailyLogs = {};
+                }
             }
             const savedMax = localStorage.getItem('sem_ltmr_maxlevel');
             if (savedMax) {
@@ -898,10 +919,13 @@
 
         function updateDashboardDisplay() {
             dashSessions.textContent = state.lifetimeStats.totalSessions;
+            const todayCount = getTodaySessionsCount();
+            dashDailySessions.textContent = todayCount;
+            statDailySessions.textContent = todayCount;
+
             const lifetimeAcc = state.lifetimeStats.totalTrials > 0 ? Math.round((state.lifetimeStats.totalCorrect / state.lifetimeStats.totalTrials) * 100) : 0;
             dashAccuracy.textContent = `${lifetimeAcc}%`;
             dashLevel.textContent = state.maxLevelReached;
-            dashTrials.textContent = state.lifetimeStats.totalTrials;
         }
 
         function updateKeybindLabels() {
@@ -1244,7 +1268,6 @@
             let isSame = Math.random() > 0.5;
             let l = '', r = '';
 
-            // Check if Affective Mode is enabled and trigger emotional word interference
             const useAffective = state.settings.affectiveMode && (Math.random() < 0.5);
             state.currentTrialData.isAffective = useAffective;
 
@@ -1255,9 +1278,8 @@
                 l = wordBank[Math.floor(Math.random() * wordBank.length)];
                 
                 if (isSame) {
-                    r = l; // Identical high-arousal emotional interference check
+                    r = l;
                 } else {
-                    // Pick a different word from another category or bank
                     let differentCat = categories[Math.floor(Math.random() * categories.length)];
                     let diffBank = AFFECTIVE_WORD_BANK[differentCat];
                     r = diffBank[Math.floor(Math.random() * diffBank.length)];
@@ -1435,6 +1457,12 @@
             state.lifetimeStats.totalSessions++;
             state.lifetimeStats.totalTrials += state.totalCount;
             state.lifetimeStats.totalCorrect += state.correctCount;
+
+            const today = getTodayKey();
+            if (!state.lifetimeStats.dailyLogs) {
+                state.lifetimeStats.dailyLogs = {};
+            }
+            state.lifetimeStats.dailyLogs[today] = (state.lifetimeStats.dailyLogs[today] || 0) + 1;
             
             saveStorage();
 
