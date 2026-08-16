@@ -597,7 +597,7 @@
 
             <!-- Manual Level Selection -->
             <div class="setting-card" id="manual-level-card">
-                <label>Starting / Fixed Level (1 - 10)</label>
+                <label>Starting / Fixed Level Selection</label>
                 <div class="level-grid" id="level-grid"></div>
             </div>
 
@@ -617,6 +617,8 @@
     </div>
 
     <script>
+        const ALL_LEVELS = [1, 2, 3, 4, 5, 6, 7, 7.5, 8, 8.5, 9, 10, 11, 12, 13];
+
         const state = {
             level: 1,
             maxLevelReached: 1,
@@ -745,17 +747,15 @@
 
         function buildLevelGrid() {
             levelGrid.innerHTML = '';
-            const levels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-            levels.forEach(lvl => {
+            ALL_LEVELS.forEach(lvl => {
                 const btn = document.createElement('button');
                 btn.className = `level-btn ${state.settings.fixedLevel === lvl ? 'active' : ''}`;
                 btn.textContent = lvl;
                 btn.addEventListener('click', () => {
+                    // Update both fixedLevel (for saving) and current session state.level instantly.
                     state.settings.fixedLevel = lvl;
-                    if (state.settings.trainingMode === 'manual') {
-                        state.level = lvl;
-                        statLevel.textContent = lvl;
-                    }
+                    state.level = lvl; 
+                    statLevel.textContent = lvl;
                     saveStorage();
                     buildLevelGrid();
                 });
@@ -767,12 +767,6 @@
             const saved = localStorage.getItem('sem_ltmr_settings');
             if (saved) {
                 state.settings = JSON.parse(saved);
-                
-                // Backwards compatibility handling
-                if(state.settings.trainingMode === 'hyper') {
-                    state.settings.trainingMode = 'adaptive';
-                }
-                
                 updateKeybindLabels();
                 settingTrainingMode.value = state.settings.trainingMode;
                 settingClassicMode.checked = state.settings.classicMode;
@@ -783,9 +777,9 @@
                 settingLanguage.value = state.settings.language;
                 settingCustomPairs.value = state.settings.customPairsJson || '';
                 settingAutoAdvance.value = state.settings.autoAdvanceDelay;
-                if (state.settings.trainingMode === 'manual') {
-                    state.level = state.settings.fixedLevel;
-                }
+                
+                // Set initial level to fixedLevel on fresh load
+                state.level = state.settings.fixedLevel || 1;
             }
             const savedStats = localStorage.getItem('sem_ltmr_stats');
             if (savedStats) {
@@ -793,7 +787,7 @@
             }
             const savedMax = localStorage.getItem('sem_ltmr_maxlevel');
             if (savedMax) {
-                state.maxLevelReached = parseInt(savedMax, 10) || 1;
+                state.maxLevelReached = parseFloat(savedMax) || 1;
             }
             statLevel.textContent = state.level;
             updateDashboardDisplay();
@@ -1001,7 +995,7 @@
             if (state.settings.trainingMode === 'manual') {
                 state.level = state.settings.fixedLevel;
             }
-            // In adaptive mode, we retain the state.level carried over from previous rounds
+            // In adaptive mode, we retain the state.level unless manually overridden by user clicking a grid button
             
             statLevel.textContent = state.level;
             
@@ -1103,9 +1097,10 @@
                 stimulusRight.classList.remove('inverted-rule');
             }
 
-            // aPOSNER Time Limit Calculation: Level 1 = 1200ms -> Level 10 = 300ms
+            // Calculation handles decimals naturally: 1300 - (7.5 * 100) = 550ms.
+            // Math.max lowered to 50ms floor to accommodate the extreme speeds of Level 11, 12, and 13.
             const baseTime = 1300 - (state.level * 100);
-            state.trialTotalTime = Math.max(300, Math.round(baseTime));
+            state.trialTotalTime = Math.max(50, Math.round(baseTime));
             state.trialStartTime = Date.now();
             
             state.trialTimeout = setTimeout(() => {
@@ -1274,7 +1269,10 @@
 
             // Immediate drop-down logic if 3 errors in a row
             if (state.settings.trainingMode === 'adaptive' && state.consecutiveErrors >= 3) {
-                state.level = Math.max(1, state.level - 1);
+                let idx = ALL_LEVELS.indexOf(state.level);
+                if (idx > 0) {
+                    state.level = ALL_LEVELS[idx - 1];
+                }
                 state.consecutiveErrors = 0;
                 statLevel.textContent = state.level;
             }
@@ -1296,11 +1294,14 @@
             const errors = state.totalCount - state.correctCount;
             let levelMessage = `Current Level: <strong>${state.level}</strong>`;
 
-            // Round-based Level Up logic
+            // Round-based Level Up logic mapping across exact array indices
             if (state.settings.trainingMode === 'adaptive') {
-                if (errors <= 3 && state.level < 10) {
-                    state.level++;
-                    levelMessage = `Current Level: <strong>${state.level}</strong> <span style="color:var(--success); font-weight:bold;">(Level Up!)</span>`;
+                if (errors <= 3) {
+                    let idx = ALL_LEVELS.indexOf(state.level);
+                    if (idx !== -1 && idx < ALL_LEVELS.length - 1) {
+                        state.level = ALL_LEVELS[idx + 1];
+                        levelMessage = `Current Level: <strong>${state.level}</strong> <span style="color:var(--success); font-weight:bold;">(Level Up!)</span>`;
+                    }
                 }
             }
 
