@@ -181,6 +181,12 @@
             box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
         }
 
+        .stimulus-box.affective-distractor {
+            border-color: #f43f5e;
+            color: #f43f5e;
+            background-color: rgba(244, 63, 94, 0.08);
+        }
+
         .action-buttons {
             display: flex;
             gap: 1rem;
@@ -549,6 +555,10 @@
                     <input type="checkbox" id="setting-multi-mode" checked>
                     <span>Multi Mode (Synonyms, Categories, Functions, Colors)</span>
                 </div>
+                <div class="checkbox-row" style="margin-top: 0.5rem;">
+                    <input type="checkbox" id="setting-affective-mode">
+                    <span>Affective / eWMTurp Mode (Emotional interference & valence)</span>
+                </div>
             </div>
 
             <!-- Experimental Features -->
@@ -597,7 +607,7 @@
 
             <!-- Manual Level Selection -->
             <div class="setting-card" id="manual-level-card">
-                <label>Starting / Fixed Level Selection</label>
+                <label>Starting / Fixed Level Selection (Clicking sets starting point in adaptive mode)</label>
                 <div class="level-grid" id="level-grid"></div>
             </div>
 
@@ -618,6 +628,90 @@
 
     <script>
         const ALL_LEVELS = [1, 2, 3, 4, 5, 6, 7, 7.5, 8, 8.5, 9, 10, 11, 12, 13];
+
+        const AFFECTIVE_WORD_BANK = {
+            threat: [
+                "TERROR", "PANIC", "AGONY", "HORROR", "SLAUGHTER",
+                "SUFFOCATION", "FATAL", "RAGE", "SCREAM", "TORTURE",
+                "SHELTERLESS", "EXECUTION", "EXPLOSION", "DISASTER", "AMBUSH",
+                "HOSTAGE", "CHAOS", "MUTILATION", "VIOLENCE", "CRUELTY",
+                "MASSACRE", "ASSAULT", "PERISH", "STRANGLE", "VENOM",
+                "ANNIHILATION", "BLOODBATH", "DECIMATE", "AMPUTATE", "STRANGULATION",
+                "PARALYSIS", "HEMORRHAGE", "ASPHYXIATION", "BUTCHERY", "CARNAGE"
+            ],
+            grief: [
+                "DESPAIR", "ANGUISH", "BETRAYAL", "ISOLATION", "ABANDONED",
+                "DEVASTATION", "TRAGEDY", "MISERY", "GRIEF", "HEARTBREAK",
+                "LONELINESS", "HOPELESS", "SHATTERED", "HELPLESS", "LOSS",
+                "REGRET", "CONDEMNED", "RUIN", "REJECTION", "MOURNING",
+                "ORPHANED", "DESTITUTE", "FORSAKEN", "HOLLOW", "EXILE",
+                "DESOLATE", "CREMATION", "BEREAVED", "CONSUMED",
+                "DECAYING", "STARK", "UNLAMENTED", "GODFORSAKEN", "INCURABLE"
+            ],
+            visceral: [
+                "REVULSION", "DECAY", "CORRUPTION", "FOUL", "ROT",
+                "CONTAMINATION", "NAUSEA", "INFESTATION", "POISON", "SICKNESS",
+                "SEWAGE", "INFECTION", "MAGGOT", "FILTH", "SMEAR",
+                "DISEASE", "PUTRID", "TOXIC", "DRAIN", "CANCER",
+                "ULCER", "GORE", "BILE", "SEPTIC", "GANGRANE",
+                "NECROSIS", "BIOLOGICAL", "EXUDATE", "PUS", "VISCERA",
+                "MUCUS", "BIOMASS", "CONTAMINATED", "SORDID", "ULCEROUS"
+            ],
+            intensePositive: [
+                "ECSTASY", "EUPHORIA", "RAPTURE", "PASSION", "BLISS",
+                "TRIUMPH", "OBSESSION", "ADRENALINE", "EXHILARATION", "DEVOTION",
+                "PARADISE", "DELIGHT", "THRILL", "VICTORY", "BELOVED",
+                "INTOXICATION", "DESIRE", "CHERISH", "INFATUATION", "FEAST",
+                "IMMORTAL", "SUPREME", "INVINCIBLE", "EUPHORIC",
+                "APEX", "ELECTRIC", "UNSTOPPABLE", "GODLIKE", "TRANSCENDENT",
+                "MAGNIFICENT", "UNBOUND", "SUPREMACY", "PHENOMENAL", "BLINDING"
+            ],
+            ambiguousShock: [
+                "VOID", "UNHINGED", "HYSTERIA", "PARANOIA", "VULNERABLE",
+                "CONFESSION", "SURREAL", "JUDGMENT", "REVELATION", "FATUM",
+                "STALKER", "SECRETS", "HALLUCINATION", "OBSCURITY", "DELUSION",
+                "SHADOW", "ECHO", "SUSPITION", "INVASION", "CONTAGION",
+                "GLITCH", "ANOMALY", "MIRAGE", "DECEPTION", "PANOPTICON",
+                "SCHIZOID", "LABYRINTH", "DISLOCATION", "WHISPER", "DOPPELGANGER",
+                "UNCONSCIOUS", "AMNESIA", "SOMNAMBULIST", "PARALYSIS", "CIPHER"
+            ],
+            socialIsolation: [
+                "IGNORED", "ABANDONED", "ISOLATED", "REJECTED", "EXCLUDED",
+                "ALONE", "UNWANTED", "FORGOTTEN", "DISTANT", "OUTCAST",
+                "INVISIBLE", "UNSEEN", "OSTRACIZED", "PARIAH", "EXILED",
+                "QUARANTINED", "GHOST", "UNMOURNED", "REMOVED", "NULLIFIED",
+                "DETACHED", "STRANDED", "EXTINCTION", "MONAD", "ANONYMOUS"
+            ],
+            sexual: [
+                "CARNAL", "LUST", "ECSTATIC", "INTIMATE", "TEMPTATION",
+                "SEDUCTION", "FLESH", "FORBIDDEN", "YEARNING", "ORGASM",
+                "BONDAGE", "SKIN", "WARMTH", "HUNGER", "DOMINION",
+                "SURRENDER", "POSSESSION", "MOAN", "BREATH", "RAPTURE",
+                "FETISH", "OBSESSION", "ENTWINED", "EXPOSED", "APHRODISIAC",
+                "SAVAGE", "LASCIVIOUS", "RAW", "GRAZING", "VOLUPTUOUS"
+            ],
+            spiritualSacred: [
+                "SACRED", "DIVINE", "INFINITY", "ETERNAL", "TRANSCENDENT",
+                "HOLY", "SOUL", "REDEMPTION", "BLINDING", "REVELATION",
+                "SANCTUARY", "HALO", "ABSOLUTE", "GRACE", "PURITY",
+                "COSMIC", "DAMNATION", "ALTAR", "PRAYER", "GLORY",
+                "BLASPHEMY", "SERAPHIM", "MARTYRDOM", "ZEALOT", "APOCALYPSE",
+                "PROPHESY", "OMNIPOTENT", "SANCTIFIED", "EXCOMMUNICATED", "DIVINITY"
+            ],
+            existentialDread: [
+                "OBSOLETE", "MEANINGLESS", "NULL", "ABYSS", "PHANTOM",
+                "TRANSIENT", "FUTILE", "INSIGNIFICANT", "ECLIPSE", "TERMINAL",
+                "SILENCE", "WITHER", "VANISH", "SOLIPSISM", "DISSOLUTION",
+                "NOTHINGNESS", "OBLIVION", "ENTROPY", "NIHIL", "ETERNITY",
+                "UNMADE", "VANISHING", "INEVITABLE", "VACUUM", "NONEXISTENT"
+            ],
+            cyberneticHorror: [
+                "OVERRIDE", "CORRUPTED", "MALWARE", "INTEGRITY", "FAIL", "DISCONNECTED",
+                "SYNAPSE", "OVERLOAD", "PARASITE", "INVASION", "ANOMALY",
+                "BLACKBOX", "TERMINATED", "RECURSION", "LOOP", "ERROR",
+                "MUTATED", "UNRESPONSIVE", "BREACH", "ISOLATED", "HOST"
+            ]
+        };
 
         const state = {
             level: 1,
@@ -646,6 +740,7 @@
                 trainingMode: 'adaptive',
                 classicMode: true,
                 multiMode: true,
+                affectiveMode: false,
                 ufoiv: false,
                 inversion: false,
                 soundEnabled: true,
@@ -663,7 +758,8 @@
                 left: '',
                 right: '',
                 isSame: false,
-                isInverted: false
+                isInverted: false,
+                isAffective: false
             },
             listeningForBinding: null
         };
@@ -727,6 +823,7 @@
         const settingTrainingMode = document.getElementById('setting-training-mode');
         const settingClassicMode = document.getElementById('setting-classic-mode');
         const settingMultiMode = document.getElementById('setting-multi-mode');
+        const settingAffectiveMode = document.getElementById('setting-affective-mode');
         const settingUfoiv = document.getElementById('setting-ufoiv');
         const settingInversion = document.getElementById('setting-inversion');
         const settingSound = document.getElementById('setting-sound');
@@ -749,12 +846,11 @@
             levelGrid.innerHTML = '';
             ALL_LEVELS.forEach(lvl => {
                 const btn = document.createElement('button');
-                btn.className = `level-btn ${state.settings.fixedLevel === lvl ? 'active' : ''}`;
+                btn.className = `level-btn ${state.level === lvl ? 'active' : ''}`;
                 btn.textContent = lvl;
                 btn.addEventListener('click', () => {
-                    // Update both fixedLevel (for saving) and current session state.level instantly.
-                    state.settings.fixedLevel = lvl;
-                    state.level = lvl; 
+                    // Clicking a level sets the starting level for the session immediately, even in adaptive mode.
+                    state.level = lvl;
                     statLevel.textContent = lvl;
                     saveStorage();
                     buildLevelGrid();
@@ -771,6 +867,7 @@
                 settingTrainingMode.value = state.settings.trainingMode;
                 settingClassicMode.checked = state.settings.classicMode;
                 settingMultiMode.checked = state.settings.multiMode;
+                settingAffectiveMode.checked = !!state.settings.affectiveMode;
                 settingUfoiv.checked = state.settings.ufoiv;
                 settingInversion.checked = state.settings.inversion;
                 settingSound.checked = state.settings.soundEnabled;
@@ -778,7 +875,6 @@
                 settingCustomPairs.value = state.settings.customPairsJson || '';
                 settingAutoAdvance.value = state.settings.autoAdvanceDelay;
                 
-                // Set initial level to fixedLevel on fresh load
                 state.level = state.settings.fixedLevel || 1;
             }
             const savedStats = localStorage.getItem('sem_ltmr_stats');
@@ -948,6 +1044,7 @@
 
         settingClassicMode.addEventListener('change', (e) => { state.settings.classicMode = e.target.checked; saveStorage(); });
         settingMultiMode.addEventListener('change', (e) => { state.settings.multiMode = e.target.checked; saveStorage(); });
+        settingAffectiveMode.addEventListener('change', (e) => { state.settings.affectiveMode = e.target.checked; saveStorage(); });
         settingUfoiv.addEventListener('change', (e) => { state.settings.ufoiv = e.target.checked; saveStorage(); });
         settingInversion.addEventListener('change', (e) => { state.settings.inversion = e.target.checked; saveStorage(); });
         settingSound.addEventListener('change', (e) => { state.settings.soundEnabled = e.target.checked; saveStorage(); });
@@ -995,7 +1092,6 @@
             if (state.settings.trainingMode === 'manual') {
                 state.level = state.settings.fixedLevel;
             }
-            // In adaptive mode, we retain the state.level unless manually overridden by user clicking a grid button
             
             statLevel.textContent = state.level;
             
@@ -1065,10 +1161,22 @@
             ruleScreen.classList.add('hidden');
             trainingContainer.classList.remove('hidden');
 
-            cueDisplay.textContent = `Rule: ${state.currentTrialData.rule.toUpperCase()}${state.currentTrialData.isInverted ? ' (INVERTED)' : ''}`;
+            let ruleTextHeading = `Rule: ${state.currentTrialData.rule.toUpperCase()}${state.currentTrialData.isInverted ? ' (INVERTED)' : ''}`;
+            if (state.currentTrialData.isAffective) {
+                ruleTextHeading += ' [AFFECTIVE INTERFERENCE]';
+            }
+            cueDisplay.textContent = ruleTextHeading;
             
             stimulusLeft.textContent = state.currentTrialData.left;
             stimulusRight.textContent = state.currentTrialData.right;
+
+            if (state.currentTrialData.isAffective) {
+                stimulusLeft.classList.add('affective-distractor');
+                stimulusRight.classList.add('affective-distractor');
+            } else {
+                stimulusLeft.classList.remove('affective-distractor');
+                stimulusRight.classList.remove('affective-distractor');
+            }
 
             if (state.settings.ufoiv) {
                 stimulusLeft.style.position = 'absolute';
@@ -1097,8 +1205,6 @@
                 stimulusRight.classList.remove('inverted-rule');
             }
 
-            // Calculation handles decimals naturally: 1300 - (7.5 * 100) = 550ms.
-            // Math.max lowered to 50ms floor to accommodate the extreme speeds of Level 11, 12, and 13.
             const baseTime = 1300 - (state.level * 100);
             state.trialTotalTime = Math.max(50, Math.round(baseTime));
             state.trialStartTime = Date.now();
@@ -1121,6 +1227,7 @@
                         state.currentTrialData.right = cp.r;
                         state.currentTrialData.isSame = cp.isSame;
                         state.currentTrialData.isInverted = state.settings.inversion && (Math.random() < 0.25);
+                        state.currentTrialData.isAffective = false;
                         return;
                     }
                 } catch(e) {}
@@ -1135,77 +1242,97 @@
             state.currentTrialData.rule = rule;
 
             let isSame = Math.random() > 0.5;
-
             let l = '', r = '';
 
-            if (rule === 'physical') {
+            // Check if Affective Mode is enabled and trigger emotional word interference
+            const useAffective = state.settings.affectiveMode && (Math.random() < 0.5);
+            state.currentTrialData.isAffective = useAffective;
+
+            if (useAffective) {
+                const categories = Object.keys(AFFECTIVE_WORD_BANK);
+                const randomCat = categories[Math.floor(Math.random() * categories.length)];
+                const wordBank = AFFECTIVE_WORD_BANK[randomCat];
+                l = wordBank[Math.floor(Math.random() * wordBank.length)];
+                
                 if (isSame) {
-                    l = '7'; r = '7';
+                    r = l; // Identical high-arousal emotional interference check
                 } else {
-                    l = '7'; r = getNumWord(7, state.settings.language);
+                    // Pick a different word from another category or bank
+                    let differentCat = categories[Math.floor(Math.random() * categories.length)];
+                    let diffBank = AFFECTIVE_WORD_BANK[differentCat];
+                    r = diffBank[Math.floor(Math.random() * diffBank.length)];
+                    if (r === l) r = "VOID";
                 }
-            } else if (rule === 'meaning') {
-                const num = Math.floor(Math.random() * 9) + 1;
-                l = num.toString();
-                if (isSame) {
-                    r = getNumWord(num, state.settings.language);
-                } else {
-                    let diffNum = (num % 9) + 1;
-                    r = getNumWord(diffNum, state.settings.language);
+            } else {
+                if (rule === 'physical') {
+                    if (isSame) {
+                        l = '7'; r = '7';
+                    } else {
+                        l = '7'; r = getNumWord(7, state.settings.language);
+                    }
+                } else if (rule === 'meaning') {
+                    const num = Math.floor(Math.random() * 9) + 1;
+                    l = num.toString();
+                    if (isSame) {
+                        r = getNumWord(num, state.settings.language);
+                    } else {
+                        let diffNum = (num % 9) + 1;
+                        r = getNumWord(diffNum, state.settings.language);
+                    }
+                } else if (rule === 'synonym') {
+                    const pairs = [
+                        {l: 'FAST', r: 'QUICK', same: true},
+                        {l: 'BIG', r: 'LARGE', same: true},
+                        {l: 'HAPPY', r: 'SAD', same: false},
+                        {l: 'SMART', r: 'BRIGHT', same: true}
+                    ];
+                    const p = pairs[Math.floor(Math.random() * pairs.length)];
+                    l = p.l; r = isSame ? p.r : (p.same ? 'SLOW' : 'HAPPY');
+                    isSame = (r === p.r ? p.same : !p.same);
+                } else if (rule === 'category') {
+                    const pairs = [
+                        {l: 'DOG', r: 'CAT', same: true},
+                        {l: 'APPLE', r: 'ORANGE', same: true},
+                        {l: 'CHAIR', r: 'BANANA', same: false},
+                        {l: 'EAGLE', r: 'SPARROW', same: true}
+                    ];
+                    const p = pairs[Math.floor(Math.random() * pairs.length)];
+                    l = p.l; r = isSame ? p.r : 'TRUCK';
+                    isSame = (r === p.r);
+                } else if (rule === 'partwhole') {
+                    const pairs = [
+                        {l: 'WHEEL', r: 'CAR', same: true},
+                        {l: 'BRANCH', r: 'TREE', same: true},
+                        {l: 'SCREEN', r: 'BOOK', same: false},
+                        {l: 'KEY', r: 'PIANO', same: true}
+                    ];
+                    const p = pairs[Math.floor(Math.random() * pairs.length)];
+                    l = p.l; r = isSame ? p.r : 'CLOUD';
+                    isSame = (r === p.r);
+                } else if (rule === 'function') {
+                    const pairs = [
+                        {l: 'DRINK', r: 'WATER', same: true},
+                        {l: 'WRITE', r: 'PEN', same: true},
+                        {l: 'SLEEP', r: 'KNIFE', same: false},
+                        {l: 'CUT', r: 'SCISSORS', same: true}
+                    ];
+                    const p = pairs[Math.floor(Math.random() * pairs.length)];
+                    l = p.l; r = isSame ? p.r : 'SHOE';
+                    isSame = (r === p.r);
+                } else if (rule === 'color') {
+                    const pairs = [
+                        {l: 'SKY', r: 'BLUE', same: true},
+                        {l: 'GRASS', r: 'GREEN', same: true},
+                        {l: 'FIRE', r: 'YELLOW', same: false},
+                        {l: 'SNOW', r: 'WHITE', same: true}
+                    ];
+                    const p = pairs[Math.floor(Math.random() * pairs.length)];
+                    l = p.l; r = isSame ? p.r : 'PURPLE';
+                    isSame = (r === p.r);
                 }
-            } else if (rule === 'synonym') {
-                const pairs = [
-                    {l: 'FAST', r: 'QUICK', same: true},
-                    {l: 'BIG', r: 'LARGE', same: true},
-                    {l: 'HAPPY', r: 'SAD', same: false},
-                    {l: 'SMART', r: 'BRIGHT', same: true}
-                ];
-                const p = pairs[Math.floor(Math.random() * pairs.length)];
-                l = p.l; r = isSame ? p.r : (p.same ? 'SLOW' : 'HAPPY');
-                isSame = (r === p.r ? p.same : !p.same);
-            } else if (rule === 'category') {
-                const pairs = [
-                    {l: 'DOG', r: 'CAT', same: true},
-                    {l: 'APPLE', r: 'ORANGE', same: true},
-                    {l: 'CHAIR', r: 'BANANA', same: false},
-                    {l: 'EAGLE', r: 'SPARROW', same: true}
-                ];
-                const p = pairs[Math.floor(Math.random() * pairs.length)];
-                l = p.l; r = isSame ? p.r : 'TRUCK';
-                isSame = (r === p.r);
-            } else if (rule === 'partwhole') {
-                const pairs = [
-                    {l: 'WHEEL', r: 'CAR', same: true},
-                    {l: 'BRANCH', r: 'TREE', same: true},
-                    {l: 'SCREEN', r: 'BOOK', same: false},
-                    {l: 'KEY', r: 'PIANO', same: true}
-                ];
-                const p = pairs[Math.floor(Math.random() * pairs.length)];
-                l = p.l; r = isSame ? p.r : 'CLOUD';
-                isSame = (r === p.r);
-            } else if (rule === 'function') {
-                const pairs = [
-                    {l: 'DRINK', r: 'WATER', same: true},
-                    {l: 'WRITE', r: 'PEN', same: true},
-                    {l: 'SLEEP', r: 'KNIFE', same: false},
-                    {l: 'CUT', r: 'SCISSORS', same: true}
-                ];
-                const p = pairs[Math.floor(Math.random() * pairs.length)];
-                l = p.l; r = isSame ? p.r : 'SHOE';
-                isSame = (r === p.r);
-            } else if (rule === 'color') {
-                const pairs = [
-                    {l: 'SKY', r: 'BLUE', same: true},
-                    {l: 'GRASS', r: 'GREEN', same: true},
-                    {l: 'FIRE', r: 'YELLOW', same: false},
-                    {l: 'SNOW', r: 'WHITE', same: true}
-                ];
-                const p = pairs[Math.floor(Math.random() * pairs.length)];
-                l = p.l; r = isSame ? p.r : 'PURPLE';
-                isSame = (r === p.r);
             }
 
-            if (Math.random() > 0.5 && rule !== 'physical' && rule !== 'meaning') {
+            if (Math.random() > 0.5 && rule !== 'physical' && rule !== 'meaning' && !useAffective) {
                 let temp = l; l = r; r = temp;
             }
 
@@ -1267,7 +1394,6 @@
             const accuracy = Math.round((state.correctCount / state.totalCount) * 100);
             statAcc.textContent = `${accuracy}%`;
 
-            // Immediate drop-down logic if 3 errors in a row
             if (state.settings.trainingMode === 'adaptive' && state.consecutiveErrors >= 3) {
                 let idx = ALL_LEVELS.indexOf(state.level);
                 if (idx > 0) {
@@ -1294,7 +1420,6 @@
             const errors = state.totalCount - state.correctCount;
             let levelMessage = `Current Level: <strong>${state.level}</strong>`;
 
-            // Round-based Level Up logic mapping across exact array indices
             if (state.settings.trainingMode === 'adaptive') {
                 if (errors <= 3) {
                     let idx = ALL_LEVELS.indexOf(state.level);
