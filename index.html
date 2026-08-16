@@ -48,13 +48,13 @@
         }
 
         #flash-overlay.flash-correct {
-            background-color: rgba(34, 197, 94, 0.35); /* Distinct Green */
+            background-color: rgba(34, 197, 94, 0.35);
             opacity: 1;
-            transition: none; /* Instant flash, smooth fade out */
+            transition: none; 
         }
 
         #flash-overlay.flash-wrong {
-            background-color: rgba(239, 68, 68, 0.4); /* Distinct Red */
+            background-color: rgba(239, 68, 68, 0.4);
             opacity: 1;
             transition: none;
         }
@@ -443,6 +443,7 @@
             <div class="stat-item">Trial: <span id="stat-trial">0/32</span></div>
         </div>
         <div class="nav-buttons">
+            <button id="btn-pause" class="hidden">Pause</button>
             <button id="btn-dashboard">Dashboard</button>
             <button id="btn-settings">Settings</button>
         </div>
@@ -482,6 +483,13 @@
                 <button class="primary" id="btn-start" style="padding: 0.75rem 2rem; font-size: 1rem;">Start Session (Press Space)</button>
             </div>
 
+            <!-- Pause Screen -->
+            <div class="screen hidden" id="pause-screen">
+                <h1>Session Paused</h1>
+                <p>Take a breath. Ready to jump back into the flow?</p>
+                <button class="primary" id="btn-resume" style="padding: 0.75rem 2rem; font-size: 1rem;">Resume Session (Press P / Esc)</button>
+            </div>
+
             <!-- Rule / Fixation Screen -->
             <div class="screen hidden" id="rule-screen">
                 <div class="trial-counter" id="rule-trial-counter">Trial 1 of 32</div>
@@ -493,7 +501,6 @@
             <!-- Active Training Screen -->
             <div class="screen hidden" id="training-container">
                 <div class="trial-counter" id="game-trial-counter">Trial 1 of 32</div>
-                <!-- Removed Timer Bar -->
                 <div class="cue-text" id="cue-display">Rule: Meaning</div>
                 <div class="stimulus-container" id="stimulus-placement-area">
                     <div class="stimulus-box" id="stimulus-left">4</div>
@@ -619,6 +626,14 @@
             currentTrialIndex: 0,
             maxTrials: 32,
             phase: 'dashboard',
+            
+            // New state variables for Exploit & Pause features
+            inputLocked: false,
+            isPaused: false,
+            lastPhase: null,
+            trialStartTime: 0,
+            trialTotalTime: 0,
+            
             autoAdvanceTimer: null,
             trialTimeout: null,
             recentAccWindow: [],
@@ -677,6 +692,7 @@
         const ruleScreen = document.getElementById('rule-screen');
         const trainingContainer = document.getElementById('training-container');
         const summaryModal = document.getElementById('summary-modal');
+        const pauseScreen = document.getElementById('pause-screen');
 
         const navLogo = document.getElementById('nav-logo');
         const btnDashboard = document.getElementById('btn-dashboard');
@@ -684,6 +700,9 @@
         const startFromDashBtn = document.getElementById('btn-start-from-dash');
         const btnModalClose = document.getElementById('btn-modal-close');
         const readyBtn = document.getElementById('btn-ready');
+        const btnPause = document.getElementById('btn-pause');
+        const btnResume = document.getElementById('btn-resume');
+        
         const settingsBtn = document.getElementById('btn-settings');
         const closeSettingsBtn = document.getElementById('btn-close-settings');
         const settingsPanel = document.getElementById('settings-panel');
@@ -697,8 +716,6 @@
         const stimulusPlacementArea = document.getElementById('stimulus-placement-area');
         const stimulusLeft = document.getElementById('stimulus-left');
         const stimulusRight = document.getElementById('stimulus-right');
-        
-        // Removed timerFill reference
         
         const sameBtn = document.getElementById('btn-same');
         const diffBtn = document.getElementById('btn-diff');
@@ -800,6 +817,58 @@
             bindDiffBtn.textContent = state.settings.diffKeyLabel;
         }
 
+        // Pause/Resume Logic
+        function togglePause() {
+            if (state.phase === 'dashboard' || state.phase === 'welcome') return;
+
+            if (!state.isPaused) {
+                // Execute Pause
+                state.isPaused = true;
+                clearTimers();
+                
+                // Calculate remaining time if we are in stimulus phase
+                if (state.phase === 'stimulus') {
+                    const elapsed = Date.now() - state.trialStartTime;
+                    state.trialTotalTime -= elapsed;
+                }
+                
+                state.lastPhase = state.phase;
+                state.phase = 'paused';
+                
+                ruleScreen.classList.add('hidden');
+                trainingContainer.classList.add('hidden');
+                pauseScreen.classList.remove('hidden');
+                btnPause.textContent = 'Resume';
+            } else {
+                // Execute Resume
+                state.isPaused = false;
+                pauseScreen.classList.add('hidden');
+                btnPause.textContent = 'Pause';
+                state.phase = state.lastPhase;
+
+                if (state.phase === 'rule') {
+                    ruleScreen.classList.remove('hidden');
+                    const delay = state.settings.autoAdvanceDelay;
+                    if (delay > 0) {
+                        state.autoAdvanceTimer = setTimeout(() => {
+                            if (state.phase === 'rule') advanceToStimulus();
+                        }, delay * 1000);
+                    }
+                } else if (state.phase === 'stimulus') {
+                    trainingContainer.classList.remove('hidden');
+                    state.trialStartTime = Date.now();
+                    // Provide a generous buffer (min 800ms) when unpausing directly into a stimulus
+                    const resumeTime = Math.max(state.trialTotalTime, 800);
+                    state.trialTimeout = setTimeout(() => {
+                        if (state.phase === 'stimulus') handleUserChoice(null);
+                    }, resumeTime);
+                }
+            }
+        }
+
+        btnPause.addEventListener('click', togglePause);
+        btnResume.addEventListener('click', togglePause);
+
         document.querySelectorAll('.key-capture-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const action = e.target.getAttribute('data-action');
@@ -831,6 +900,15 @@
                 return;
             }
 
+            // Global Pause hotkey
+            if (e.code === 'KeyP' || e.code === 'Escape') {
+                if (state.phase === 'rule' || state.phase === 'stimulus' || state.phase === 'paused') {
+                    e.preventDefault();
+                    togglePause();
+                    return;
+                }
+            }
+
             if (e.code === 'Space') {
                 if (state.phase === 'dashboard') {
                     e.preventDefault();
@@ -840,20 +918,20 @@
                     e.preventDefault();
                     beginTrialsSequence();
                     return;
-                } else if (state.phase === 'rule' && state.settings.autoAdvanceDelay == 0) {
+                } else if (state.phase === 'rule' && state.settings.autoAdvanceDelay == 0 && !state.isPaused) {
                     e.preventDefault();
                     advanceToStimulus();
                     return;
                 }
             }
 
-            if (state.phase === 'rule' && state.settings.autoAdvanceDelay == 0 && (e.code === state.settings.sameKey || e.code === state.settings.diffKey)) {
+            if (state.phase === 'rule' && state.settings.autoAdvanceDelay == 0 && !state.isPaused && (e.code === state.settings.sameKey || e.code === state.settings.diffKey)) {
                 e.preventDefault();
                 advanceToStimulus();
                 return;
             }
 
-            if (state.phase !== 'stimulus') return;
+            if (state.phase !== 'stimulus' || state.isPaused || state.inputLocked) return;
 
             if (e.code === state.settings.sameKey) {
                 handleUserChoice(true);
@@ -888,11 +966,16 @@
         function showDashboard() {
             clearTimers();
             state.phase = 'dashboard';
+            state.isPaused = false;
+            
             dashboardScreen.classList.remove('hidden');
+            btnPause.classList.add('hidden'); // Hide pause button outside of sessions
             welcomeScreen.classList.add('hidden');
             ruleScreen.classList.add('hidden');
+            pauseScreen.classList.add('hidden');
             trainingContainer.classList.add('hidden');
             summaryModal.classList.add('hidden');
+            
             updateDashboardDisplay();
         }
 
@@ -915,6 +998,8 @@
             state.correctCount = 0;
             state.totalCount = 0;
             state.recentAccWindow = [];
+            state.isPaused = false;
+            
             if (state.settings.trainingMode === 'manual') {
                 state.level = state.settings.fixedLevel;
             } else {
@@ -924,6 +1009,7 @@
             
             welcomeScreen.classList.add('hidden');
             summaryModal.classList.add('hidden');
+            btnPause.classList.remove('hidden'); // Show pause button now that session started
             
             nextTrial();
         }
@@ -965,7 +1051,7 @@
                 ruleInstructionHint.textContent = `Proceeding in ${delay}s...`;
                 readyBtn.classList.add('hidden');
                 state.autoAdvanceTimer = setTimeout(() => {
-                    if (state.phase === 'rule') {
+                    if (state.phase === 'rule' && !state.isPaused) {
                         advanceToStimulus();
                     }
                 }, delay * 1000);
@@ -982,6 +1068,8 @@
         function advanceToStimulus() {
             clearTimeout(state.autoAdvanceTimer);
             state.phase = 'stimulus';
+            state.inputLocked = false; // Unlock inputs for the new stimulus
+            
             ruleScreen.classList.add('hidden');
             trainingContainer.classList.remove('hidden');
 
@@ -1020,13 +1108,14 @@
             }
 
             const baseTime = 4500 - (Math.pow(state.level, 1.15) * 310);
-            const responseWindowMs = Math.max(1100, Math.round(baseTime));
+            state.trialTotalTime = Math.max(1100, Math.round(baseTime));
+            state.trialStartTime = Date.now();
             
             state.trialTimeout = setTimeout(() => {
-                if (state.phase === 'stimulus') {
+                if (state.phase === 'stimulus' && !state.isPaused) {
                     handleUserChoice(null);
                 }
-            }, responseWindowMs);
+            }, state.trialTotalTime);
         }
 
         function generateTrialContent() {
@@ -1157,7 +1246,12 @@
         }
 
         function handleUserChoice(userGuessedSame) {
-            if (state.phase !== 'stimulus') return;
+            // Lockout check: If not in stimulus phase, paused, or input is already locked, ignore
+            if (state.phase !== 'stimulus' || state.isPaused || state.inputLocked) return;
+            
+            // Immediately lock inputs so rapid clicking cannot queue up more actions
+            state.inputLocked = true;
+            
             clearTimers();
 
             const timedOut = (userGuessedSame === null);
@@ -1211,6 +1305,7 @@
 
         function endSession() {
             state.phase = 'dashboard';
+            btnPause.classList.add('hidden');
             trainingContainer.classList.add('hidden');
 
             state.lifetimeStats.totalSessions++;
