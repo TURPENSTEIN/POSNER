@@ -1,3238 +1,842 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#111318">
-  <meta name="description" content="A browser-based adaptive cognitive training tool for semantic retrieval, relational monitoring, and cognitive flexibility.">
-  <title>Adaptive Cognitive Training</title>
-
-  <style>
-    /* =========================================================
-       DESIGN SYSTEM
-       ========================================================= */
-
-    :root {
-      --bg: #111318;
-      --bg-soft: #181b22;
-      --surface: #1d2129;
-      --surface-2: #242934;
-      --surface-hover: #2b303c;
-      --border: rgba(255,255,255,.09);
-
-      --text: #f2f3f5;
-      --text-muted: #9da4b2;
-      --text-dim: #6f7684;
-
-      --accent: #cc2929;
-      --accent-hover: #e13b3b;
-      --accent-soft: rgba(204,41,41,.15);
-
-      --success: #48c78e;
-      --warning: #e5aa45;
-      --danger: #e45a5a;
-
-      --radius: 14px;
-      --radius-small: 9px;
-
-      --shadow: 0 18px 55px rgba(0,0,0,.28);
-
-      --transition: 180ms ease;
-      --font: Inter, ui-sans-serif, system-ui, -apple-system,
-              BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    /* Optional light theme */
-    [data-theme="light"] {
-      --bg: #eee9e9;
-      --bg-soft: #e3dddd;
-      --surface: #f8f6f6;
-      --surface-2: #ece8e8;
-      --surface-hover: #e3dddd;
-      --border: rgba(0,0,0,.10);
-
-      --text: #262424;
-      --text-muted: #696363;
-      --text-dim: #8d8585;
-
-      --shadow: 0 18px 50px rgba(60,35,35,.12);
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
-      width: 100%;
-      min-height: 100%;
-      margin: 0;
-    }
-
-    body {
-      min-height: 100vh;
-      overflow-x: hidden;
-      background:
-        radial-gradient(
-          circle at 50% -10%,
-          rgba(204,41,41,.10),
-          transparent 38%
-        ),
-        var(--bg);
-      color: var(--text);
-      font-family: var(--font);
-      -webkit-font-smoothing: antialiased;
-      transition: background var(--transition), color var(--transition);
-    }
-
-    button,
-    input,
-    select {
-      font: inherit;
-    }
-
-    button {
-      border: 0;
-      cursor: pointer;
-      color: inherit;
-    }
-
-    button:focus-visible,
-    select:focus-visible,
-    input:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 3px;
-    }
-
-    /* =========================================================
-       APP SHELL
-       ========================================================= */
-
-    .app {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-
-      height: 72px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-
-      padding: 0 24px;
-
-      background: color-mix(in srgb, var(--bg) 88%, transparent);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-
-      border-bottom: 1px solid var(--border);
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 11px;
-      min-width: 180px;
-    }
-
-    .brand-mark {
-      width: 34px;
-      height: 34px;
-      display: grid;
-      place-items: center;
-      border-radius: 10px;
-      background: var(--accent);
-      box-shadow: 0 7px 25px rgba(204,41,41,.25);
-      font-size: 16px;
-      font-weight: 900;
-    }
-
-    .brand-text {
-      font-size: 14px;
-      font-weight: 750;
-      letter-spacing: -.01em;
-    }
-
-    .brand-subtitle {
-      display: block;
-      margin-top: 2px;
-      color: var(--text-muted);
-      font-size: 10px;
-      font-weight: 500;
-    }
-
-    .top-stats {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 9px;
-      flex: 1;
-    }
-
-    .stat {
-      min-width: 105px;
-      padding: 8px 13px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: rgba(255,255,255,.025);
-    }
-
-    .stat-label {
-      display: block;
-      color: var(--text-dim);
-      font-size: 9px;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      font-weight: 700;
-    }
-
-    .stat-value {
-      display: block;
-      margin-top: 2px;
-      font-size: 14px;
-      font-weight: 750;
-    }
-
-    .top-actions {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      min-width: 180px;
-      justify-content: flex-end;
-    }
-
-    .icon-button {
-      width: 40px;
-      height: 40px;
-      display: grid;
-      place-items: center;
-      border: 1px solid var(--border);
-      border-radius: 11px;
-      background: var(--surface);
-      color: var(--text-muted);
-      transition: all var(--transition);
-    }
-
-    .icon-button:hover {
-      background: var(--surface-hover);
-      color: var(--text);
-      transform: translateY(-1px);
-    }
-
-    /* =========================================================
-       MAIN STAGE
-       ========================================================= */
-
-    .main {
-      flex: 1;
-      width: min(1100px, calc(100% - 32px));
-      margin: 0 auto;
-      padding: 34px 0 50px;
-
-      display: flex;
-      flex-direction: column;
-    }
-
-    .stage {
-      flex: 1;
-      min-height: 560px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .screen {
-      width: 100%;
-      display: none;
-      animation: screenIn 220ms ease;
-    }
-
-    .screen.active {
-      display: block;
-    }
-
-    @keyframes screenIn {
-      from {
-        opacity: 0;
-        transform: translateY(7px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .welcome {
-      width: min(680px, 100%);
-      margin: auto;
-      text-align: center;
-    }
-
-    .eyebrow {
-      color: var(--accent);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: .15em;
-      font-weight: 800;
-    }
-
-    .welcome h1 {
-      margin: 12px 0;
-      font-size: clamp(32px, 6vw, 58px);
-      line-height: .98;
-      letter-spacing: -.055em;
-    }
-
-    .welcome p {
-      max-width: 580px;
-      margin: 0 auto;
-      color: var(--text-muted);
-      line-height: 1.7;
-      font-size: 15px;
-    }
-
-    .mode-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 11px;
-      margin: 30px 0;
-    }
-
-    .mode-card {
-      padding: 17px;
-      text-align: left;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-      transition: all var(--transition);
-    }
-
-    .mode-card:hover,
-    .mode-card.selected {
-      border-color: rgba(204,41,41,.55);
-      background: var(--accent-soft);
-      transform: translateY(-2px);
-    }
-
-    .mode-card-title {
-      font-size: 13px;
-      font-weight: 750;
-    }
-
-    .mode-card-description {
-      margin-top: 5px;
-      color: var(--text-muted);
-      font-size: 11px;
-      line-height: 1.45;
-    }
-
-    .control-row {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    /* =========================================================
-       BUTTONS
-       ========================================================= */
-
-    .primary-button,
-    .secondary-button {
-      min-height: 44px;
-      padding: 0 19px;
-      border-radius: 10px;
-      font-weight: 750;
-      font-size: 13px;
-      transition: all var(--transition);
-    }
-
-    .primary-button {
-      background: var(--accent);
-      color: white;
-      box-shadow: 0 8px 25px rgba(204,41,41,.18);
-    }
-
-    .primary-button:hover {
-      background: var(--accent-hover);
-      transform: translateY(-1px);
-      box-shadow: 0 11px 30px rgba(204,41,41,.28);
-    }
-
-    .secondary-button {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text);
-    }
-
-    .secondary-button:hover {
-      background: var(--surface-hover);
-      transform: translateY(-1px);
-    }
-
-    .danger-button {
-      color: var(--danger);
-    }
-
-    /* =========================================================
-       TRAINING AREA
-       ========================================================= */
-
-    .training-shell {
-      width: min(820px, 100%);
-      margin: auto;
-    }
-
-    .training-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 25px;
-    }
-
-    .trial-counter {
-      color: var(--text-muted);
-      font-size: 12px;
-      font-weight: 650;
-    }
-
-    .progress-track {
-      height: 4px;
-      overflow: hidden;
-      border-radius: 99px;
-      background: var(--surface-2);
-    }
-
-    .progress-fill {
-      width: 0;
-      height: 100%;
-      border-radius: inherit;
-      background: var(--accent);
-      transition: width 160ms ease;
-    }
-
-    .rule-cue {
-      min-height: 105px;
-      display: grid;
-      place-items: center;
-      text-align: center;
-    }
-
-    .rule-cue-label {
-      color: var(--text-dim);
-      margin-bottom: 8px;
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: .13em;
-      font-weight: 800;
-    }
-
-    .rule-cue h2 {
-      margin: 0;
-      font-size: clamp(24px, 4vw, 36px);
-      letter-spacing: -.035em;
-    }
-
-    .stimulus-area {
-      min-height: 275px;
-      display: grid;
-      place-items: center;
-      margin: 15px 0;
-    }
-
-    .stimulus-pair {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: clamp(25px, 7vw, 70px);
-    }
-
-    .stimulus-item {
-      width: clamp(110px, 18vw, 175px);
-      height: clamp(110px, 18vw, 175px);
-
-      display: grid;
-      place-items: center;
-
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      background: var(--surface);
-      box-shadow: var(--shadow);
-
-      font-size: clamp(30px, 6vw, 52px);
-      font-weight: 800;
-      letter-spacing: -.03em;
-
-      user-select: none;
-    }
-
-    .stimulus-connector {
-      color: var(--text-dim);
-      font-size: 20px;
-      font-weight: 800;
-    }
-
-    .response-area {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      margin-top: 12px;
-    }
-
-    .response-button {
-      width: min(220px, 40%);
-      min-height: 70px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 11px;
-
-      border: 1px solid var(--border);
-      border-radius: 13px;
-      background: var(--surface);
-
-      font-weight: 800;
-      font-size: 15px;
-
-      transition: all 100ms ease;
-      user-select: none;
-    }
-
-    .response-button:hover {
-      background: var(--surface-hover);
-    }
-
-    .response-button:active,
-    .response-button.pressed {
-      background: var(--accent-soft);
-      border-color: var(--accent);
-      transform: scale(.97);
-    }
-
-    .key-hint {
-      width: 27px;
-      height: 27px;
-      display: grid;
-      place-items: center;
-
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      background: var(--surface-2);
-
-      color: var(--text-muted);
-      font-size: 11px;
-      font-weight: 800;
-    }
-
-    /* =========================================================
-       FIXATION
-       ========================================================= */
-
-    .fixation {
-      display: grid;
-      place-items: center;
-      min-height: 400px;
-    }
-
-    .fixation-cross {
-      font-size: 64px;
-      font-weight: 300;
-      color: var(--text-muted);
-      line-height: 1;
-    }
-
-    /* =========================================================
-       RESULTS
-       ========================================================= */
-
-    .result-card {
-      width: min(700px, 100%);
-      margin: auto;
-      padding: 35px;
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      background: var(--surface);
-      box-shadow: var(--shadow);
-      text-align: center;
-    }
-
-    .result-card h2 {
-      margin: 8px 0;
-      font-size: 32px;
-      letter-spacing: -.04em;
-    }
-
-    .result-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin: 28px 0;
-    }
-
-    .result-stat {
-      padding: 17px 10px;
-      border-radius: 11px;
-      background: var(--surface-2);
-    }
-
-    .result-stat strong {
-      display: block;
-      font-size: 21px;
-    }
-
-    .result-stat span {
-      display: block;
-      margin-top: 4px;
-      color: var(--text-muted);
-      font-size: 9px;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-    }
-
-    /* =========================================================
-       PANELS
-       ========================================================= */
-
-    .overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 50;
-      display: none;
-      background: rgba(0,0,0,.55);
-      backdrop-filter: blur(4px);
-    }
-
-    .overlay.open {
-      display: block;
-    }
-
-    .side-panel {
-      position: fixed;
-      top: 0;
-      right: 0;
-      z-index: 60;
-
-      width: min(390px, 92vw);
-      height: 100vh;
-
-      overflow-y: auto;
-      padding: 25px;
-
-      background: var(--surface);
-      border-left: 1px solid var(--border);
-      box-shadow: -20px 0 60px rgba(0,0,0,.3);
-
-      transform: translateX(100%);
-      transition: transform 230ms ease;
-    }
-
-    .side-panel.open {
-      transform: translateX(0);
-    }
-
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 25px;
-    }
-
-    .panel-header h2 {
-      margin: 0;
-      font-size: 19px;
-    }
-
-    .setting-group {
-      margin-bottom: 25px;
-    }
-
-    .setting-label {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 9px;
-      color: var(--text-muted);
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    select,
-    input[type="number"] {
-      width: 100%;
-      min-height: 42px;
-      padding: 0 11px;
-
-      border: 1px solid var(--border);
-      border-radius: 9px;
-
-      background: var(--surface-2);
-      color: var(--text);
-
-      outline: none;
-    }
-
-    input[type="range"] {
-      width: 100%;
-      accent-color: var(--accent);
-    }
-
-    .toggle {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 15px;
-
-      padding: 13px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: var(--surface-2);
-    }
-
-    .toggle-copy strong {
-      display: block;
-      font-size: 12px;
-    }
-
-    .toggle-copy span {
-      display: block;
-      margin-top: 3px;
-      color: var(--text-muted);
-      font-size: 10px;
-    }
-
-    .switch {
-      position: relative;
-      width: 42px;
-      height: 24px;
-      flex-shrink: 0;
-    }
-
-    .switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
-    .switch-track {
-      position: absolute;
-      inset: 0;
-      border-radius: 20px;
-      background: var(--text-dim);
-      cursor: pointer;
-      transition: background var(--transition);
-    }
-
-    .switch-track::after {
-      content: "";
-      position: absolute;
-      width: 18px;
-      height: 18px;
-      left: 3px;
-      top: 3px;
-      border-radius: 50%;
-      background: white;
-      transition: transform var(--transition);
-    }
-
-    .switch input:checked + .switch-track {
-      background: var(--accent);
-    }
-
-    .switch input:checked + .switch-track::after {
-      transform: translateX(18px);
-    }
-
-    /* =========================================================
-       PROGRESS
-       ========================================================= */
-
-    .progress-content {
-      width: min(900px, 100%);
-      margin: auto;
-    }
-
-    .progress-content h2 {
-      margin-bottom: 6px;
-      font-size: 28px;
-      letter-spacing: -.04em;
-    }
-
-    .progress-content > p {
-      color: var(--text-muted);
-      font-size: 13px;
-    }
-
-    .chart-card {
-      margin-top: 25px;
-      padding: 20px;
-      border: 1px solid var(--border);
-      border-radius: 15px;
-      background: var(--surface);
-    }
-
-    .chart-wrapper {
-      position: relative;
-      width: 100%;
-      height: 310px;
-    }
-
-    #progressCanvas {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-
-    .history-table {
-      width: 100%;
-      margin-top: 15px;
-      border-collapse: collapse;
-      font-size: 11px;
-    }
-
-    .history-table th,
-    .history-table td {
-      padding: 11px 7px;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .history-table th {
-      color: var(--text-dim);
-      font-size: 9px;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-    }
-
-    /* =========================================================
-       TOAST / FEEDBACK
-       ========================================================= */
-
-    .feedback {
-      position: fixed;
-      left: 50%;
-      bottom: 30px;
-      z-index: 100;
-
-      padding: 10px 16px;
-      border: 1px solid var(--border);
-      border-radius: 99px;
-      background: var(--surface);
-      box-shadow: var(--shadow);
-
-      font-size: 12px;
-      font-weight: 700;
-
-      opacity: 0;
-      pointer-events: none;
-      transform: translate(-50%, 10px);
-      transition: all 180ms ease;
-    }
-
-    .feedback.visible {
-      opacity: 1;
-      transform: translate(-50%, 0);
-    }
-
-    .feedback.success {
-      color: var(--success);
-    }
-
-    .feedback.error {
-      color: var(--danger);
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    /* =========================================================
-       RESPONSIVE
-       ========================================================= */
-
-    @media (max-width: 800px) {
-      .topbar {
-        height: auto;
-        min-height: 66px;
-        padding: 10px 14px;
-      }
-
-      .brand {
-        min-width: auto;
-      }
-
-      .brand-subtitle {
-        display: none;
-      }
-
-      .top-stats {
-        gap: 5px;
-      }
-
-      .stat {
-        min-width: 0;
-        padding: 7px 8px;
-      }
-
-      .stat-label {
-        font-size: 8px;
-      }
-
-      .stat-value {
-        font-size: 11px;
-      }
-
-      .top-actions {
-        min-width: auto;
-      }
-
-      .main {
-        width: min(100% - 22px, 700px);
-        padding-top: 15px;
-      }
-
-      .stage {
-        min-height: 500px;
-      }
-
-      .mode-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .result-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    @media (max-width: 550px) {
-      .brand-text {
-        display: none;
-      }
-
-      .top-stats {
-        justify-content: flex-start;
-      }
-
-      .stat:nth-child(3) {
-        display: none;
-      }
-
-      .stat {
-        flex: 1;
-      }
-
-      .top-actions {
-        margin-left: auto;
-      }
-
-      .icon-button {
-        width: 37px;
-        height: 37px;
-      }
-
-      .stimulus-pair {
-        gap: 12px;
-      }
-
-      .stimulus-item {
-        width: 105px;
-        height: 105px;
-        font-size: 29px;
-      }
-
-      .stimulus-connector {
-        font-size: 14px;
-      }
-
-      .response-button {
-        width: 46%;
-        min-height: 62px;
-        font-size: 13px;
-      }
-
-      .key-hint {
-        display: none;
-      }
-
-      .result-card {
-        padding: 25px 17px;
-      }
-    }
-
-    @media (max-width: 370px) {
-      .stat:nth-child(2) {
-        display: none;
-      }
-
-      .stimulus-item {
-        width: 92px;
-        height: 92px;
-      }
-    }
-
-    /* Respect reduced-motion preferences. */
-    @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        scroll-behavior: auto !important;
-        animation-duration: .01ms !important;
-        transition-duration: .01ms !important;
-      }
-    }
-  </style>
-</head>
-
-<body>
-<div class="app">
-
-  <!-- =======================================================
-       TOP BAR
-       ======================================================= -->
-
-  <header class="topbar">
-    <div class="brand">
-      <div class="brand-mark">A</div>
-      <div class="brand-text">
-        ADAPTIVE TRAINING
-        <span class="brand-subtitle">Cognitive flexibility & retrieval</span>
-      </div>
-    </div>
-
-    <div class="top-stats">
-      <div class="stat">
-        <span class="stat-label">Level</span>
-        <span class="stat-value" id="levelDisplay">1</span>
-      </div>
-
-      <div class="stat">
-        <span class="stat-label">Accuracy</span>
-        <span class="stat-value" id="accuracyDisplay">—</span>
-      </div>
-
-      <div class="stat">
-        <span class="stat-label">Today</span>
-        <span class="stat-value" id="todayTimeDisplay">0:00</span>
-      </div>
-
-      <div class="stat">
-        <span class="stat-label">Session</span>
-        <span class="stat-value" id="countdownDisplay">—</span>
-      </div>
-    </div>
-
-    <div class="top-actions">
-      <button
-        class="icon-button"
-        id="progressButton"
-        aria-label="Open progress"
-        title="Progress"
-      >↗</button>
-
-      <button
-        class="icon-button"
-        id="settingsButton"
-        aria-label="Open settings"
-        title="Settings"
-      >⚙</button>
-    </div>
-  </header>
-
-
-  <!-- =======================================================
-       MAIN APPLICATION
-       ======================================================= -->
-
-  <main class="main">
-    <div class="stage">
-
-      <!-- ---------------------------------------------------
-           HOME SCREEN
-           --------------------------------------------------- -->
-
-      <section class="screen active" id="homeScreen">
-        <div class="welcome">
-
-          <div class="eyebrow">Cognitive Training</div>
-
-          <h1>Train the way<br>your brain adapts.</h1>
-
-          <p>
-            Complete short adaptive sessions that challenge semantic
-            retrieval, relational monitoring, and cognitive flexibility.
-            Difficulty changes automatically according to your performance.
-          </p>
-
-          <div class="mode-grid">
-            <button class="mode-card selected" data-mode="matching">
-              <div class="mode-card-title">Matching</div>
-              <div class="mode-card-description">
-                Decide whether two stimuli share the requested property.
-              </div>
-            </button>
-
-            <button class="mode-card" data-mode="relational">
-              <div class="mode-card-title">Relational</div>
-              <div class="mode-card-description">
-                Monitor numerical relationships between paired stimuli.
-              </div>
-            </button>
-
-            <button class="mode-card" data-mode="flexibility">
-              <div class="mode-card-title">Flexibility</div>
-              <div class="mode-card-description">
-                Switch between physical and semantic rules.
-              </div>
-            </button>
-          </div>
-
-          <div class="control-row">
-            <button class="primary-button" id="startButton">
-              Start Training
-            </button>
-          </div>
-
-        </div>
-      </section>
-
-
-      <!-- ---------------------------------------------------
-           FIXATION SCREEN
-           --------------------------------------------------- -->
-
-      <section class="screen" id="fixationScreen">
-        <div class="fixation">
-          <div class="fixation-cross">+</div>
-        </div>
-      </section>
-
-
-      <!-- ---------------------------------------------------
-           TASK SCREEN
-           --------------------------------------------------- -->
-
-      <section class="screen" id="taskScreen">
-        <div class="training-shell">
-
-          <div class="training-header">
-            <span class="trial-counter" id="trialCounter">
-              Trial 1 / 32
-            </span>
-
-            <span class="trial-counter" id="streakDisplay">
-              Streak 0
-            </span>
-          </div>
-
-          <div class="progress-track">
-            <div class="progress-fill" id="trialProgress"></div>
-          </div>
-
-          <div class="rule-cue">
-            <div>
-              <div class="rule-cue-label">Current rule</div>
-              <h2 id="ruleCue">Same format?</h2>
-            </div>
-          </div>
-
-          <div class="stimulus-area">
-            <div class="stimulus-pair">
-              <div class="stimulus-item" id="stimulusA">4</div>
-              <div class="stimulus-connector">·</div>
-              <div class="stimulus-item" id="stimulusB">IV</div>
-            </div>
-          </div>
-
-          <div class="response-area">
-            <button class="response-button" data-answer="same">
-              <span class="key-hint">S</span>
-              SAME
-            </button>
-
-            <button class="response-button" data-answer="different">
-              <span class="key-hint">D</span>
-              DIFFERENT
-            </button>
-          </div>
-
-        </div>
-      </section>
-
-
-      <!-- ---------------------------------------------------
-           SESSION COMPLETE
-           --------------------------------------------------- -->
-
-      <section class="screen" id="completeScreen">
-        <div class="result-card">
-
-          <div class="eyebrow">Session complete</div>
-
-          <h2 id="completionTitle">Good work.</h2>
-
-          <p id="completionMessage" style="color:var(--text-muted);">
-            Your performance has been recorded.
-          </p>
-
-          <div class="result-grid">
-            <div class="result-stat">
-              <strong id="resultAccuracy">0%</strong>
-              <span>Accuracy</span>
-            </div>
-
-            <div class="result-stat">
-              <strong id="resultTrials">0</strong>
-              <span>Trials</span>
-            </div>
-
-            <div class="result-stat">
-              <strong id="resultRT">—</strong>
-              <span>Mean RT</span>
-            </div>
-
-            <div class="result-stat">
-              <strong id="resultLevel">1</strong>
-              <span>Level</span>
-            </div>
-          </div>
-
-          <div class="control-row">
-            <button class="primary-button" id="againButton">
-              Train Again
-            </button>
-
-            <button class="secondary-button" id="homeButton">
-              Home
-            </button>
-          </div>
-
-        </div>
-      </section>
-
-
-      <!-- ---------------------------------------------------
-           PROGRESS SCREEN
-           --------------------------------------------------- -->
-
-      <section class="screen" id="progressScreen">
-        <div class="progress-content">
-
-          <div class="eyebrow">Analytics</div>
-          <h2>Progress</h2>
-          <p>
-            Your local training history and adaptive level trajectory.
-          </p>
-
-          <div class="chart-card">
-            <div class="chart-wrapper">
-              <canvas id="progressCanvas"></canvas>
-            </div>
-          </div>
-
-          <div class="chart-card">
-            <table class="history-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Sessions</th>
-                  <th>Accuracy</th>
-                  <th>Level</th>
-                  <th>Time</th>
-                </tr>
-              </thead>
-
-              <tbody id="historyBody"></tbody>
-            </table>
-          </div>
-
-          <div class="control-row" style="margin-top:20px;">
-            <button class="secondary-button danger-button" id="clearHistoryButton">
-              Clear History
-            </button>
-          </div>
-
-        </div>
-      </section>
-
-    </div>
-  </main>
-</div>
-
-
-<!-- =========================================================
-     PANEL OVERLAY
-     ========================================================= -->
-
-<div class="overlay" id="panelOverlay"></div>
-
-
-<!-- =========================================================
-     SETTINGS PANEL
-     ========================================================= -->
-
-<aside class="side-panel" id="settingsPanel">
-
-  <div class="panel-header">
-    <h2>Settings</h2>
-    <button class="icon-button panel-close" aria-label="Close settings">×</button>
-  </div>
-
-  <div class="setting-group">
-    <div class="setting-label">
-      <span>Session duration</span>
-      <span id="durationValue">5 min</span>
-    </div>
-
-    <input
-      id="durationInput"
-      type="range"
-      min="1"
-      max="20"
-      step="1"
-      value="5"
-    >
-  </div>
-
-  <div class="setting-group">
-    <div class="setting-label">
-      <span>Starting level</span>
-      <span id="startLevelValue">1</span>
-    </div>
-
-    <input
-      id="startLevelInput"
-      type="range"
-      min="1"
-      max="10"
-      step="1"
-      value="1"
-    >
-  </div>
-
-  <div class="setting-group">
-    <div class="setting-label">
-      <span>Number range</span>
-    </div>
-
-    <select id="numberRangeInput">
-      <option value="10">1–10</option>
-      <option value="20">1–20</option>
-      <option value="50">1–50</option>
-      <option value="100">1–100</option>
-    </select>
-  </div>
-
-  <div class="setting-group">
-    <div class="setting-label">
-      <span>Writing system A</span>
-    </div>
-
-    <select id="formatAInput">
-      <option value="arabic">Arabic numerals</option>
-      <option value="words">Written words</option>
-      <option value="roman">Roman numerals</option>
-    </select>
-  </div>
-
-  <div class="setting-group">
-    <div class="setting-label">
-      <span>Writing system B</span>
-    </div>
-
-    <select id="formatBInput">
-      <option value="roman">Roman numerals</option>
-      <option value="arabic">Arabic numerals</option>
-      <option value="words">Written words</option>
-    </select>
-  </div>
-
-  <div class="setting-group">
-    <div class="toggle">
-      <div class="toggle-copy">
-        <strong>Negation mode</strong>
-        <span>Reverse the meaning of the response buttons.</span>
-      </div>
-
-      <label class="switch">
-        <input id="negationInput" type="checkbox">
-        <span class="switch-track"></span>
-      </label>
-    </div>
-  </div>
-
-  <div class="setting-group">
-    <div class="toggle">
-      <div class="toggle-copy">
-        <strong>Theme</strong>
-        <span>Switch between dark and light appearance.</span>
-      </div>
-
-      <button class="secondary-button" id="themeButton">
-        Toggle
-      </button>
-    </div>
-  </div>
-
-  <div class="setting-group">
-    <button
-      class="secondary-button"
-      id="resetLevelButton"
-      style="width:100%;"
-    >
-      Reset Adaptive Level
-    </button>
-  </div>
-
-</aside>
-
-
-<!-- =========================================================
-     FEEDBACK
-     ========================================================= -->
-
-<div class="feedback" id="feedback"></div>
-
-
-<script>
-/* ============================================================
-   ADAPTIVE COGNITIVE TRAINING ENGINE
-   ------------------------------------------------------------
-   Architecture:
-   - Centralized state
-   - Local persistence
-   - Deterministic trial generation
-   - Performance.now() timing
-   - Adaptive difficulty
-   - Keyboard + touch responses
-   - Canvas analytics
-   ============================================================ */
-
-"use strict";
-
-
-/* ============================================================
-   CONSTANTS
-   ============================================================ */
-
-const STORAGE_KEY = "adaptive_cognitive_training_v1";
-
-const TOTAL_TRIALS = 32;
-
-const DEFAULT_SETTINGS = {
-  durationMinutes: 5,
-  startingLevel: 1,
-  numberRange: 10,
-  formatA: "arabic",
-  formatB: "roman",
-  negation: false,
-  theme: "dark"
-};
-
-
-/* ============================================================
-   DOM REFERENCES
-   ============================================================ */
-
-const $ = selector => document.querySelector(selector);
-
-const screens = {
-  home: $("#homeScreen"),
-  fixation: $("#fixationScreen"),
-  task: $("#taskScreen"),
-  complete: $("#completeScreen"),
-  progress: $("#progressScreen")
-};
-
-const levelDisplay = $("#levelDisplay");
-const accuracyDisplay = $("#accuracyDisplay");
-const todayTimeDisplay = $("#todayTimeDisplay");
-const countdownDisplay = $("#countdownDisplay");
-
-const trialCounter = $("#trialCounter");
-const streakDisplay = $("#streakDisplay");
-const trialProgress = $("#trialProgress");
-
-const ruleCue = $("#ruleCue");
-const stimulusA = $("#stimulusA");
-const stimulusB = $("#stimulusB");
-
-const progressCanvas = $("#progressCanvas");
-const historyBody = $("#historyBody");
-
-const feedback = $("#feedback");
-
-
-/* ============================================================
-   PERSISTED DATA
-   ============================================================ */
-
-function defaultDatabase() {
-  return {
-    settings: { ...DEFAULT_SETTINGS },
-
-    adaptiveLevel: 1,
-
-    lifetime: {
-      trials: 0,
-      correct: 0,
-      totalTimeMs: 0
-    },
-
-    days: {},
-
-    sessions: []
-  };
-}
-
-
-function loadDatabase() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-
-    if (!raw) {
-      return defaultDatabase();
-    }
-
-    const parsed = JSON.parse(raw);
-
-    return {
-      ...defaultDatabase(),
-      ...parsed,
-      settings: {
-        ...DEFAULT_SETTINGS,
-        ...(parsed.settings || {})
-      },
-      lifetime: {
-        ...defaultDatabase().lifetime,
-        ...(parsed.lifetime || {})
-      },
-      days: parsed.days || {},
-      sessions: parsed.sessions || []
-    };
-
-  } catch (error) {
-    console.warn("Could not load saved training data:", error);
-    return defaultDatabase();
-  }
-}
-
-
-let db = loadDatabase();
-
-
-function saveDatabase() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
-  } catch (error) {
-    console.warn("Could not save training data:", error);
-  }
-}
-
-
-/* ============================================================
-   RUNTIME STATE
-   ============================================================ */
-
-const state = {
-  screen: "home",
-
-  mode: "matching",
-
-  level: db.adaptiveLevel || 1,
-
-  trial: 0,
-
-  correct: 0,
-
-  errors: 0,
-
-  misses: 0,
-
-  streak: 0,
-
-  bestStreak: 0,
-
-  consecutiveFailures: 0,
-
-  reactionTimes: [],
-
-  trialData: [],
-
-  currentTrial: null,
-
-  trialStartTime: 0,
-
-  sessionStartTime: 0,
-
-  sessionDurationMs: 0,
-
-  countdownTimer: null,
-
-  responseTimer: null,
-
-  fixationTimer: null,
-
-  acceptingResponse: false,
-
-  sessionActive: false
-};
-
-
-/* ============================================================
-   SCREEN NAVIGATION
-   ============================================================ */
-
-function showScreen(name) {
-  Object.values(screens).forEach(screen => {
-    screen.classList.remove("active");
-  });
-
-  if (screens[name]) {
-    screens[name].classList.add("active");
-  }
-
-  state.screen = name;
-
-  if (name === "progress") {
-    requestAnimationFrame(drawProgressChart);
-    renderHistory();
-  }
-}
-
-
-/* ============================================================
-   UTILITY FUNCTIONS
-   ============================================================ */
-
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
-}
-
-
-function randomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-
-function shuffle(array) {
-  const result = [...array];
-
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-
-  return result;
-}
-
-
-function formatTime(ms) {
-  if (!Number.isFinite(ms) || ms < 0) {
-    return "0:00";
-  }
-
-  const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-
-  return `${minutes}:${String(seconds).padStart(2, "0")}`;
-}
-
-
-function todayKey() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-
-function mean(values) {
-  if (!values.length) return 0;
-
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
-}
-
-
-/* ============================================================
-   NUMBER FORMATTING
-   ============================================================ */
-
-const NUMBER_WORDS = [
-  "zero",
-  "one",
-  "two",
-  "three",
-  "four",
-  "five",
-  "six",
-  "seven",
-  "eight",
-  "nine",
-  "ten",
-  "eleven",
-  "twelve",
-  "thirteen",
-  "fourteen",
-  "fifteen",
-  "sixteen",
-  "seventeen",
-  "eighteen",
-  "nineteen",
-  "twenty"
-];
-
-
-function numberToWords(number) {
-  if (number <= 20) {
-    return NUMBER_WORDS[number];
-  }
-
-  if (number < 100) {
-    const tens = [
-      "",
-      "",
-      "twenty",
-      "thirty",
-      "forty",
-      "fifty",
-      "sixty",
-      "seventy",
-      "eighty",
-      "ninety"
-    ];
-
-    const remainder = number % 10;
-
-    return remainder
-      ? `${tens[Math.floor(number / 10)]}-${NUMBER_WORDS[remainder]}`
-      : tens[Math.floor(number / 10)];
-  }
-
-  if (number < 1000) {
-    const hundreds = Math.floor(number / 100);
-    const remainder = number % 100;
-
-    return remainder
-      ? `${NUMBER_WORDS[hundreds]} hundred ${numberToWords(remainder)}`
-      : `${NUMBER_WORDS[hundreds]} hundred`;
-  }
-
-  return String(number);
-}
-
-
-function toRoman(number) {
-  const values = [
-    [1000, "M"],
-    [900, "CM"],
-    [500, "D"],
-    [400, "CD"],
-    [100, "C"],
-    [90, "XC"],
-    [50, "L"],
-    [40, "XL"],
-    [10, "X"],
-    [9, "IX"],
-    [5, "V"],
-    [4, "IV"],
-    [1, "I"]
-  ];
-
-  let output = "";
-
-  for (const [value, symbol] of values) {
-    while (number >= value) {
-      output += symbol;
-      number -= value;
-    }
-  }
-
-  return output;
-}
-
-
-function formatNumber(number, format) {
-  switch (format) {
-    case "words":
-      return numberToWords(number);
-
-    case "roman":
-      return toRoman(number);
-
-    case "arabic":
-    default:
-      return String(number);
-  }
-}
-
-
-/* ============================================================
-   RESPONSE WINDOW
-   ------------------------------------------------------------
-   Higher levels produce shorter response windows.
-   The exact mapping is intentionally smooth rather than
-   abruptly changing between levels.
-   ============================================================ */
-
-function responseWindowForLevel(level) {
-  /*
-   * Level 1  = 3000 ms
-   * Level 10 = 1000 ms
-   */
-  return Math.round(
-    3000 - ((level - 1) / 9) * 2000
-  );
-}
-
-
-/* ============================================================
-   RULE GENERATION
-   ============================================================ */
-
-function generateRule() {
-  /*
-   * Matching:
-   *   Same format vs Different format
-   *
-   * Relational:
-   *   Same value vs Different value
-   *
-   * Flexibility:
-   *   Alternates between physical and semantic rules.
-   */
-
-  if (state.mode === "matching") {
-    return Math.random() < .5
-      ? "format-same"
-      : "format-different";
-  }
-
-  if (state.mode === "relational") {
-    return Math.random() < .5
-      ? "value-same"
-      : "value-different";
-  }
-
-  return Math.random() < .5
-    ? "format"
-    : "value";
-}
-
-
-/* ============================================================
-   TRIAL GENERATION
-   ============================================================ */
-
-function generateTrial() {
-  const range = Number(db.settings.numberRange);
-
-  let valueA = randomInt(1, range);
-  let valueB;
-
-  /*
-   * At higher levels, create more subtle semantic
-   * relationships by increasing the probability of
-   * near-neighbor values.
-   */
-
-  const subtleProbability = state.level >= 6 ? .55 : .25;
-
-  if (Math.random() < subtleProbability) {
-    const offset = randomInt(1, Math.min(5, range - 1));
-
-    valueB = clamp(
-      valueA + (Math.random() < .5 ? offset : -offset),
-      1,
-      range
-    );
-
-    if (valueB === valueA) {
-      valueB = valueA === range
-        ? valueA - offset
-        : valueA + offset;
-    }
-
-  } else {
-    valueB = randomInt(1, range);
-  }
-
-  let rule = generateRule();
-
-  /*
-   * For flexibility, randomize actual pair relationships
-   * independently of the rule.
-   */
-
-  const sameValue = valueA === valueB;
-
-  const sameFormat = db.settings.formatA === db.settings.formatB;
-
-  /*
-   * Determine the actual semantic answer.
-   */
-
-  let actualAnswer;
-
-  if (rule === "format-same") {
-    actualAnswer = sameFormat ? "same" : "different";
-
-  } else if (rule === "format-different") {
-    actualAnswer = sameFormat ? "different" : "same";
-
-  } else if (rule === "value-same") {
-    actualAnswer = sameValue ? "same" : "different";
-
-  } else if (rule === "value-different") {
-    actualAnswer = sameValue ? "different" : "same";
-
-  } else if (rule === "format") {
-    actualAnswer = sameFormat ? "same" : "different";
-
-  } else {
-    actualAnswer = sameValue ? "same" : "different";
-  }
-
-  /*
-   * Negation reverses the response mapping.
-   */
-
-  const correctAnswer = db.settings.negation
-    ? (actualAnswer === "same" ? "different" : "same")
-    : actualAnswer;
-
-  return {
-    valueA,
-    valueB,
-
-    displayA: formatNumber(valueA, db.settings.formatA),
-    displayB: formatNumber(valueB, db.settings.formatB),
-
-    rule,
-
-    actualAnswer,
-    correctAnswer,
-
-    responseWindow: responseWindowForLevel(state.level)
-  };
-}
-
-
-/* ============================================================
-   RULE LABEL
-   ============================================================ */
-
-function ruleLabel(trial) {
-  if (trial.rule === "format-same") {
-    return "Same format?";
-  }
-
-  if (trial.rule === "format-different") {
-    return "Different format?";
-  }
-
-  if (trial.rule === "value-same") {
-    return "Same numerical value?";
-  }
-
-  if (trial.rule === "value-different") {
-    return "Different numerical value?";
-  }
-
-  if (trial.rule === "format") {
-    return "Same format?";
-  }
-
-  return "Same numerical value?";
-}
-
-
-/* ============================================================
-   ADAPTIVE DIFFICULTY
-   ============================================================ */
-
-function updateAdaptiveDifficulty(correct) {
-  if (correct) {
-    state.consecutiveFailures = 0;
-
-    /*
-     * A meaningful streak of correct responses increases
-     * difficulty. We use 3 consecutive correct responses
-     * as the basic progression threshold.
-     */
-    if (state.streak >= 3) {
-      state.level = clamp(state.level + 1, 1, 10);
-      state.streak = 0;
-
-      showFeedback(`Level ${state.level}`, "success");
-    }
-
-    return;
-  }
-
-  state.consecutiveFailures++;
-
-  /*
-   * Two consecutive failures trigger regression.
-   * This prevents a single accidental error from causing
-   * an unnecessary level drop.
-   */
-  if (state.consecutiveFailures >= 2) {
-    state.level = clamp(state.level - 1, 1, 10);
-
-    state.consecutiveFailures = 0;
-
-    showFeedback(`Adjusted to level ${state.level}`, "error");
-  }
-}
-
-
-/* ============================================================
-   START SESSION
-   ============================================================ */
-
-function startSession() {
-  stopTimers();
-
-  state.level = clamp(
-    Number(db.settings.startingLevel || db.adaptiveLevel || 1),
-    1,
-    10
-  );
-
-  /*
-   * If an established adaptive level exists, use it unless
-   * the user explicitly selected another starting level.
-   */
-  if (
-    Number(db.settings.startingLevel) === Number(db.adaptiveLevel)
-  ) {
-    state.level = db.adaptiveLevel;
-  }
-
-  state.trial = 0;
-  state.correct = 0;
-  state.errors = 0;
-  state.misses = 0;
-  state.streak = 0;
-  state.bestStreak = 0;
-  state.consecutiveFailures = 0;
-
-  state.reactionTimes = [];
-  state.trialData = [];
-
-  state.currentTrial = null;
-  state.sessionActive = true;
-
-  state.sessionStartTime = performance.now();
-
-  state.sessionDurationMs =
-    Number(db.settings.durationMinutes) * 60 * 1000;
-
-  updateHeader();
-
-  showScreen("fixation");
-
-  state.fixationTimer = setTimeout(() => {
-    presentNextTrial();
-  }, 600);
-
-  startCountdown();
-}
-
-
-/* ============================================================
-   PRESENT NEXT TRIAL
-   ============================================================ */
-
-function presentNextTrial() {
-  if (!state.sessionActive) {
-    return;
-  }
-
-  if (state.trial >= TOTAL_TRIALS) {
-    finishSession();
-    return;
-  }
-
-  if (
-    performance.now() - state.sessionStartTime >=
-    state.sessionDurationMs
-  ) {
-    finishSession();
-    return;
-  }
-
-  state.trial++;
-
-  state.currentTrial = generateTrial();
-
-  trialCounter.textContent =
-    `Trial ${state.trial} / ${TOTAL_TRIALS}`;
-
-  trialProgress.style.width =
-    `${(state.trial / TOTAL_TRIALS) * 100}%`;
-
-  ruleCue.textContent =
-    ruleLabel(state.currentTrial);
-
-  stimulusA.textContent =
-    state.currentTrial.displayA;
-
-  stimulusB.textContent =
-    state.currentTrial.displayB;
-
-  showScreen("task");
-
-  /*
-   * Small browser paint delay ensures the stimulus is visually
-   * presented before response timing starts.
-   */
-
-  requestAnimationFrame(() => {
-    if (!state.sessionActive) return;
-
-    state.trialStartTime = performance.now();
-    state.acceptingResponse = true;
-
-    state.responseTimer = setTimeout(() => {
-      if (!state.acceptingResponse) return;
-
-      state.acceptingResponse = false;
-
-      state.misses++;
-
-      recordTrial({
-        answer: null,
-        correct: false,
-        reactionTime: null,
-        timeout: true
-      });
-
-      updateAdaptiveDifficulty(false);
-
-      state.streak = 0;
-
-      updateHeader();
-
-      showFeedback("Too slow", "error");
-
-      scheduleNextTrial();
-
-    }, state.currentTrial.responseWindow);
-  });
-}
-
-
-/* ============================================================
-   RESPONSE HANDLING
-   ============================================================ */
-
-function submitResponse(answer, button = null) {
-  if (!state.sessionActive || !state.acceptingResponse) {
-    return;
-  }
-
-  state.acceptingResponse = false;
-
-  if (state.responseTimer) {
-    clearTimeout(state.responseTimer);
-    state.responseTimer = null;
-  }
-
-  if (button) {
-    button.classList.add("pressed");
-
-    setTimeout(() => {
-      button.classList.remove("pressed");
-    }, 100);
-  }
-
-  const reactionTime =
-    performance.now() - state.trialStartTime;
-
-  const correct =
-    answer === state.currentTrial.correctAnswer;
-
-  if (correct) {
-    state.correct++;
-    state.streak++;
-    state.bestStreak =
-      Math.max(state.bestStreak, state.streak);
-
-    state.reactionTimes.push(reactionTime);
-
-  } else {
-    state.errors++;
-    state.streak = 0;
-  }
-
-  recordTrial({
-    answer,
-    correct,
-    reactionTime,
-    timeout: false
-  });
-
-  updateAdaptiveDifficulty(correct);
-
-  updateHeader();
-
-  showFeedback(
-    correct ? "Correct" : "Incorrect",
-    correct ? "success" : "error"
-  );
-
-  scheduleNextTrial();
-}
-
-
-/* ============================================================
-   RECORD TRIAL
-   ============================================================ */
-
-function recordTrial(data) {
-  state.trialData.push({
-    trial: state.trial,
-    level: state.level,
-    timestamp: Date.now(),
-    ...data
-  });
-}
-
-
-/* ============================================================
-   NEXT TRIAL SCHEDULING
-   ============================================================ */
-
-function scheduleNextTrial() {
-  stopResponseTimer();
-
-  /*
-   * Brief fixation period between trials.
-   */
-  showScreen("fixation");
-
-  state.fixationTimer = setTimeout(() => {
-    presentNextTrial();
-  }, 350);
-}
-
-
-/* ============================================================
-   SESSION COUNTDOWN
-   ============================================================ */
-
-function startCountdown() {
-  stopCountdown();
-
-  state.countdownTimer = setInterval(() => {
-    if (!state.sessionActive) {
-      return;
-    }
-
-    const elapsed =
-      performance.now() - state.sessionStartTime;
-
-    const remaining =
-      Math.max(0, state.sessionDurationMs - elapsed);
-
-    countdownDisplay.textContent =
-      formatTime(remaining);
-
-    if (remaining <= 0) {
-      finishSession();
-    }
-
-    updateTodayTimeDisplay();
-
-  }, 100);
-}
-
-
-function stopCountdown() {
-  if (state.countdownTimer) {
-    clearInterval(state.countdownTimer);
-    state.countdownTimer = null;
-  }
-}
-
-
-/* ============================================================
-   FINISH SESSION
-   ============================================================ */
-
-function finishSession() {
-  if (!state.sessionActive) {
-    return;
-  }
-
-  state.sessionActive = false;
-  state.acceptingResponse = false;
-
-  stopTimers();
-
-  const elapsed =
-    Math.min(
-      performance.now() - state.sessionStartTime,
-      state.sessionDurationMs
-    );
-
-  const attemptedTrials =
-    state.correct +
-    state.errors +
-    state.misses;
-
-  const accuracy =
-    attemptedTrials
-      ? state.correct / attemptedTrials
-      : 0;
-
-  const averageRT =
-    state.reactionTimes.length
-      ? mean(state.reactionTimes)
-      : 0;
-
-  /*
-   * Persist the adaptive level.
-   */
-  db.adaptiveLevel = state.level;
-
-  /*
-   * Lifetime totals.
-   */
-  db.lifetime.trials += attemptedTrials;
-  db.lifetime.correct += state.correct;
-  db.lifetime.totalTimeMs += elapsed;
-
-  /*
-   * Daily totals.
-   */
-  const key = todayKey();
-
-  if (!db.days[key]) {
-    db.days[key] = {
-      sessions: 0,
-      trials: 0,
-      correct: 0,
-      timeMs: 0,
-      highestLevel: 1,
-      lowestLevel: 10,
-      finalLevel: 1
-    };
-  }
-
-  const day = db.days[key];
-
-  day.sessions++;
-  day.trials += attemptedTrials;
-  day.correct += state.correct;
-  day.timeMs += elapsed;
-  day.highestLevel =
-    Math.max(day.highestLevel, state.level);
-
-  day.lowestLevel =
-    Math.min(day.lowestLevel, state.level);
-
-  day.finalLevel = state.level;
-
-  /*
-   * Individual session record.
-   */
-  db.sessions.push({
-    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    date: new Date().toISOString(),
-
-    mode: state.mode,
-
-    trials: attemptedTrials,
-    correct: state.correct,
-    errors: state.errors,
-    misses: state.misses,
-
-    accuracy,
-    averageRT,
-
-    startingLevel: db.settings.startingLevel,
-    finalLevel: state.level,
-
-    bestStreak: state.bestStreak,
-
-    durationMs: elapsed
-  });
-
-  /*
-   * Keep local storage bounded.
-   */
-  if (db.sessions.length > 500) {
-    db.sessions = db.sessions.slice(-500);
-  }
-
-  saveDatabase();
-
-  /*
-   * Update result UI.
-   */
-  $("#resultAccuracy").textContent =
-    `${Math.round(accuracy * 100)}%`;
-
-  $("#resultTrials").textContent =
-    attemptedTrials;
-
-  $("#resultRT").textContent =
-    averageRT
-      ? `${Math.round(averageRT)} ms`
-      : "—";
-
-  $("#resultLevel").textContent =
-    state.level;
-
-  $("#completionTitle").textContent =
-    accuracy >= .8
-      ? "Strong session."
-      : accuracy >= .6
-        ? "Solid work."
-        : "Keep building.";
-
-  $("#completionMessage").textContent =
-    `You finished at adaptive level ${state.level}.`;
-
-  updateHeader();
-
-  showScreen("complete");
-}
-
-
-/* ============================================================
-   TIMER CLEANUP
-   ============================================================ */
-
-function stopResponseTimer() {
-  if (state.responseTimer) {
-    clearTimeout(state.responseTimer);
-    state.responseTimer = null;
-  }
-}
-
-
-function stopTimers() {
-  stopResponseTimer();
-
-  stopCountdown();
-
-  if (state.fixationTimer) {
-    clearTimeout(state.fixationTimer);
-    state.fixationTimer = null;
-  }
-}
-
-
-/* ============================================================
-   HEADER STATISTICS
-   ============================================================ */
-
-function updateHeader() {
-  levelDisplay.textContent = state.level;
-
-  const attempted =
-    state.correct +
-    state.errors +
-    state.misses;
-
-  accuracyDisplay.textContent =
-    attempted
-      ? `${Math.round((state.correct / attempted) * 100)}%`
-      : "—";
-
-  streakDisplay.textContent =
-    `Streak ${state.streak}`;
-
-  updateTodayTimeDisplay();
-}
-
-
-function updateTodayTimeDisplay() {
-  const key = todayKey();
-
-  const savedTime =
-    db.days[key]?.timeMs || 0;
-
-  let currentTime = 0;
-
-  if (state.sessionActive) {
-    currentTime =
-      performance.now() - state.sessionStartTime;
-  }
-
-  todayTimeDisplay.textContent =
-    formatTime(savedTime + currentTime);
-}
-
-
-/* ============================================================
-   FEEDBACK TOAST
-   ============================================================ */
-
-let feedbackTimer = null;
-
-function showFeedback(message, type = "") {
-  feedback.textContent = message;
-
-  feedback.className =
-    `feedback visible ${type}`;
-
-  clearTimeout(feedbackTimer);
-
-  feedbackTimer = setTimeout(() => {
-    feedback.classList.remove("visible");
-  }, 750);
-}
-
-
-/* ============================================================
-   SETTINGS
-   ============================================================ */
-
-function initializeSettingsUI() {
-  $("#durationInput").value =
-    db.settings.durationMinutes;
-
-  $("#durationValue").textContent =
-    `${db.settings.durationMinutes} min`;
-
-  $("#startLevelInput").value =
-    db.settings.startingLevel;
-
-  $("#startLevelValue").textContent =
-    db.settings.startingLevel;
-
-  $("#numberRangeInput").value =
-    db.settings.numberRange;
-
-  $("#formatAInput").value =
-    db.settings.formatA;
-
-  $("#formatBInput").value =
-    db.settings.formatB;
-
-  $("#negationInput").checked =
-    db.settings.negation;
-
-  applyTheme();
-}
-
-
-function saveSetting(name, value) {
-  db.settings[name] = value;
-  saveDatabase();
-}
-
-
-$("#durationInput").addEventListener("input", event => {
-  const value = Number(event.target.value);
-
-  db.settings.durationMinutes = value;
-
-  $("#durationValue").textContent =
-    `${value} min`;
-
-  saveDatabase();
-});
-
-
-$("#startLevelInput").addEventListener("input", event => {
-  const value = Number(event.target.value);
-
-  db.settings.startingLevel = value;
-
-  $("#startLevelValue").textContent =
-    value;
-
-  saveDatabase();
-});
-
-
-$("#numberRangeInput").addEventListener("change", event => {
-  saveSetting(
-    "numberRange",
-    Number(event.target.value)
-  );
-});
-
-
-$("#formatAInput").addEventListener("change", event => {
-  saveSetting(
-    "formatA",
-    event.target.value
-  );
-});
-
-
-$("#formatBInput").addEventListener("change", event => {
-  saveSetting(
-    "formatB",
-    event.target.value
-  );
-});
-
-
-$("#negationInput").addEventListener("change", event => {
-  saveSetting(
-    "negation",
-    event.target.checked
-  );
-});
-
-
-/* ============================================================
-   THEME
-   ============================================================ */
-
-function applyTheme() {
-  document.documentElement.dataset.theme =
-    db.settings.theme;
-
-  $("#themeButton").textContent =
-    db.settings.theme === "dark"
-      ? "Dark"
-      : "Light";
-}
-
-
-$("#themeButton").addEventListener("click", () => {
-  db.settings.theme =
-    db.settings.theme === "dark"
-      ? "light"
-      : "dark";
-
-  saveDatabase();
-  applyTheme();
-});
-
-
-/* ============================================================
-   LEVEL RESET
-   ============================================================ */
-
-$("#resetLevelButton").addEventListener("click", () => {
-  db.adaptiveLevel = 1;
-  db.settings.startingLevel = 1;
-
-  state.level = 1;
-
-  $("#startLevelInput").value = 1;
-  $("#startLevelValue").textContent = 1;
-
-  saveDatabase();
-  updateHeader();
-
-  showFeedback("Adaptive level reset", "success");
-});
-
-
-/* ============================================================
-   MODE SELECTION
-   ============================================================ */
-
-document.querySelectorAll(".mode-card").forEach(card => {
-  card.addEventListener("click", () => {
-
-    document
-      .querySelectorAll(".mode-card")
-      .forEach(item => item.classList.remove("selected"));
-
-    card.classList.add("selected");
-
-    state.mode =
-      card.dataset.mode;
-  });
-});
-
-
-/* ============================================================
-   START / RESTART / HOME
-   ============================================================ */
-
-$("#startButton").addEventListener(
-  "click",
-  startSession
-);
-
-
-$("#againButton").addEventListener(
-  "click",
-  startSession
-);
-
-
-$("#homeButton").addEventListener(
-  "click",
-  () => {
-    stopTimers();
-    state.sessionActive = false;
-
-    updateHeader();
-    showScreen("home");
-  }
-);
-
-
-/* ============================================================
-   RESPONSE BUTTONS
-   ============================================================ */
-
-document
-  .querySelectorAll(".response-button")
-  .forEach(button => {
-
-    button.addEventListener("click", () => {
-      submitResponse(
-        button.dataset.answer,
-        button
-      );
-    });
-  });
-
-
-/* ============================================================
-   KEYBOARD INPUT
-   ------------------------------------------------------------
-   S / Left Arrow  = Same
-   D / Right Arrow = Different
-   Escape          = Stop active session
-   ============================================================ */
-
-document.addEventListener("keydown", event => {
-
-  /*
-   * Don't capture keys while typing into a form element.
-   */
-  const target = event.target;
-
-  if (
-    target instanceof HTMLInputElement ||
-    target instanceof HTMLSelectElement ||
-    target instanceof HTMLTextAreaElement
-  ) {
-    return;
-  }
-
-  if (
-    state.screen === "task" &&
-    state.sessionActive
-  ) {
-
-    if (
-      event.key === "s" ||
-      event.key === "S" ||
-      event.key === "ArrowLeft"
-    ) {
-      event.preventDefault();
-
-      const button =
-        document.querySelector(
-          '.response-button[data-answer="same"]'
-        );
-
-      submitResponse("same", button);
-
-      return;
-    }
-
-    if (
-      event.key === "d" ||
-      event.key === "D" ||
-      event.key === "ArrowRight"
-    ) {
-      event.preventDefault();
-
-      const button =
-        document.querySelector(
-          '.response-button[data-answer="different"]'
-        );
-
-      submitResponse("different", button);
-
-      return;
-    }
-
-    if (event.key === "Escape") {
-      finishSession();
-    }
-  }
-});
-
-
-/* ============================================================
-   PANELS
-   ============================================================ */
-
-const settingsPanel = $("#settingsPanel");
-const panelOverlay = $("#panelOverlay");
-
-
-function openPanel(panel) {
-  panel.classList.add("open");
-  panelOverlay.classList.add("open");
-}
-
-
-function closePanels() {
-  settingsPanel.classList.remove("open");
-  panelOverlay.classList.remove("open");
-}
-
-
-$("#settingsButton").addEventListener("click", () => {
-  openPanel(settingsPanel);
-});
-
-
-$("#progressButton").addEventListener("click", () => {
-  showScreen("progress");
-});
-
-
-document
-  .querySelector(".panel-close")
-  .addEventListener("click", closePanels);
-
-
-panelOverlay.addEventListener(
-  "click",
-  closePanels
-);
-
-
-/* ============================================================
-   PROGRESS HISTORY
-   ============================================================ */
-
-function aggregateDays() {
-  return Object.entries(db.days)
-    .map(([date, data]) => ({
-      date,
-      ...data
-    }))
-    .sort((a, b) =>
-      a.date.localeCompare(b.date)
-    );
-}
-
-
-function renderHistory() {
-  const days = aggregateDays()
-    .reverse();
-
-  historyBody.innerHTML = "";
-
-  if (!days.length) {
-    historyBody.innerHTML = `
-      <tr>
-        <td colspan="5" style="color:var(--text-muted);text-align:center;">
-          No training history yet.
-        </td>
-      </tr>
-    `;
-
-    return;
-  }
-
-  days.slice(0, 30).forEach(day => {
-
-    const accuracy =
-      day.trials
-        ? Math.round(
-            (day.correct / day.trials) * 100
-          )
-        : 0;
-
-    const row =
-      document.createElement("tr");
-
-    row.innerHTML = `
-      <td>${day.date}</td>
-      <td>${day.sessions}</td>
-      <td>${accuracy}%</td>
-      <td>${day.finalLevel}</td>
-      <td>${formatTime(day.timeMs)}</td>
-    `;
-
-    historyBody.appendChild(row);
-  });
-}
-
-
-/* ============================================================
-   CANVAS PROGRESS CHART
-   ============================================================ */
-
-function drawProgressChart() {
-  const canvas = progressCanvas;
-
-  if (!canvas) return;
-
-  const wrapper =
-    canvas.parentElement;
-
-  const rect =
-    wrapper.getBoundingClientRect();
-
-  if (rect.width <= 0 || rect.height <= 0) {
-    return;
-  }
-
-  const dpr =
-    window.devicePixelRatio || 1;
-
-  canvas.width =
-    Math.floor(rect.width * dpr);
-
-  canvas.height =
-    Math.floor(rect.height * dpr);
-
-  const ctx =
-    canvas.getContext("2d");
-
-  ctx.setTransform(
-    dpr,
-    0,
-    0,
-    dpr,
-    0,
-    0
-  );
-
-  const width = rect.width;
-  const height = rect.height;
-
-  /*
-   * Background.
-   */
-  ctx.clearRect(0, 0, width, height);
-
-  const styles =
-    getComputedStyle(document.documentElement);
-
-  const text =
-    styles.getPropertyValue("--text-muted").trim();
-
-  const dim =
-    styles.getPropertyValue("--text-dim").trim();
-
-  const accent =
-    styles.getPropertyValue("--accent").trim();
-
-  const border =
-    styles.getPropertyValue("--border").trim();
-
-  const days =
-    aggregateDays().slice(-14);
-
-  const padding = {
-    top: 25,
-    right: 20,
-    bottom: 35,
-    left: 35
-  };
-
-  const chartWidth =
-    width - padding.left - padding.right;
-
-  const chartHeight =
-    height - padding.top - padding.bottom;
-
-  /*
-   * Grid.
-   */
-  ctx.strokeStyle = border;
-  ctx.lineWidth = 1;
-
-  for (let level = 1; level <= 10; level++) {
-
-    const y =
-      padding.top +
-      chartHeight -
-      ((level - 1) / 9) * chartHeight;
-
-    ctx.beginPath();
-    ctx.moveTo(padding.left, y);
-    ctx.lineTo(width - padding.right, y);
-    ctx.stroke();
-
-    ctx.fillStyle = dim;
-    ctx.font = "9px Inter, sans-serif";
-    ctx.textAlign = "right";
-    ctx.fillText(
-      String(level),
-      padding.left - 7,
-      y + 3
-    );
-  }
-
-  if (!days.length) {
-    ctx.fillStyle = text;
-    ctx.font = "13px Inter, sans-serif";
-    ctx.textAlign = "center";
-
-    ctx.fillText(
-      "Complete a session to begin tracking progress.",
-      width / 2,
-      height / 2
-    );
-
-    return;
-  }
-
-  /*
-   * Map data to coordinates.
-   */
-  const xFor = index =>
-    days.length === 1
-      ? padding.left + chartWidth / 2
-      : padding.left +
-        (index / (days.length - 1)) * chartWidth;
-
-  const yFor = level =>
-    padding.top +
-    chartHeight -
-    ((level - 1) / 9) * chartHeight;
-
-  /*
-   * Draw highest and lowest ranges.
-   */
-  days.forEach((day, index) => {
-
-    const x = xFor(index);
-
-    const highY =
-      yFor(day.highestLevel);
-
-    const lowY =
-      yFor(day.lowestLevel);
-
-    ctx.strokeStyle = border;
-    ctx.lineWidth = 4;
-
-    ctx.beginPath();
-    ctx.moveTo(x, highY);
-    ctx.lineTo(x, lowY);
-    ctx.stroke();
-
-    /*
-     * Final level point.
-     */
-    ctx.fillStyle = accent;
-
-    ctx.beginPath();
-    ctx.arc(
-      x,
-      yFor(day.finalLevel),
-      4,
-      0,
-      Math.PI * 2
-    );
-
-    ctx.fill();
-
-    /*
-     * Date labels.
-     */
-    ctx.fillStyle = dim;
-    ctx.font = "9px Inter, sans-serif";
-    ctx.textAlign = "center";
-
-    const shortDate =
-      day.date.slice(5);
-
-    ctx.fillText(
-      shortDate,
-      x,
-      height - 12
-    );
-  });
-
-  /*
-   * Connect final-level points.
-   */
-  if (days.length > 1) {
-
-    ctx.strokeStyle = accent;
-    ctx.lineWidth = 2;
-
-    ctx.beginPath();
-
-    days.forEach((day, index) => {
-
-      const x = xFor(index);
-      const y = yFor(day.finalLevel);
-
-      if (index === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    });
-
-    ctx.stroke();
-  }
-}
-
-
-/* ============================================================
-   CLEAR HISTORY
-   ============================================================ */
-
-$("#clearHistoryButton").addEventListener("click", () => {
-
-  const confirmed =
-    window.confirm(
-      "Clear all locally stored training history? This cannot be undone."
-    );
-
-  if (!confirmed) return;
-
-  const settings =
-    db.settings;
-
-  db = defaultDatabase();
-
-  db.settings = settings;
-  db.adaptiveLevel = 1;
-
-  state.level = 1;
-
-  saveDatabase();
-
-  renderHistory();
-  drawProgressChart();
-  updateHeader();
-
-  showFeedback(
-    "History cleared",
-    "success"
-  );
-});
-
-
-/* ============================================================
-   WINDOW RESIZE
-   ============================================================ */
-
-let resizeFrame = null;
-
-window.addEventListener("resize", () => {
-
-  cancelAnimationFrame(resizeFrame);
-
-  resizeFrame =
-    requestAnimationFrame(() => {
-
-      if (
-        state.screen === "progress"
-      ) {
-        drawProgressChart();
-      }
-    });
-});
-
-
-/* ============================================================
-   PAGE VISIBILITY
-   ------------------------------------------------------------
-   If the browser tab is backgrounded during a task, we do not
-   silently grant extra response time. The timing engine uses
-   performance.now(), which remains the authoritative clock.
-   ============================================================ */
-
-document.addEventListener(
-  "visibilitychange",
-  () => {
-
-    if (
-      document.visibilityState === "visible"
-    ) {
-      updateHeader();
-
-      if (
-        state.sessionActive &&
-        state.sessionStartTime
-      ) {
-
-        const elapsed =
-          performance.now() -
-          state.sessionStartTime;
-
-        if (
-          elapsed >=
-          state.sessionDurationMs
-        ) {
-          finishSession();
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Long Term Memory Recall - Posner Mixed Task</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --surface-color: #1e293b;
+            --surface-hover: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --border: #334155;
         }
-      }
-    }
-  }
-);
 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
 
-/* ============================================================
-   INITIALIZATION
-   ============================================================ */
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
 
-function initialize() {
-  initializeSettingsUI();
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: var(--surface-color);
+            border-bottom: 1px solid var(--border);
+        }
 
-  state.level =
-    clamp(
-      Number(db.adaptiveLevel || 1),
-      1,
-      10
-    );
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
 
-  updateHeader();
+        .stats-bar {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
 
-  showScreen("home");
-}
+        .stat-item span {
+            color: var(--text-main);
+            font-weight: 600;
+        }
 
+        .nav-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
 
-/*
- * DOM is already below the script, but this guard makes the
- * file safe if the script is later moved into <head>.
- */
-if (document.readyState === "loading") {
-  document.addEventListener(
-    "DOMContentLoaded",
-    initialize,
-    { once: true }
-  );
-} else {
-  initialize();
-}
+        button {
+            background-color: var(--surface-hover);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
 
+        button:hover {
+            background-color: var(--border);
+        }
 
-/* ============================================================
-   GLOBAL DEBUG / DEVELOPMENT API
-   ------------------------------------------------------------
-   Deliberately small API useful when testing the standalone
-   file from browser DevTools.
-   ============================================================ */
+        button.primary {
+            background-color: var(--accent);
+            color: #0f172a;
+            border: none;
+        }
 
-window.AdaptiveTraining = {
-  startSession,
-  finishSession,
-  generateTrial,
-  getState: () => ({
-    ...state,
-    reactionTimes: [...state.reactionTimes],
-    trialData: [...state.trialData]
-  }),
-  getDatabase: () => structuredClone(db)
-};
+        button.primary:hover {
+            background-color: var(--accent-hover);
+        }
 
-</script>
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .stage {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            width: 100%;
+            max-width: 650px;
+            min-height: 420px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .cue-text {
+            font-size: 1.25rem;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .stimulus-container {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .stimulus-box {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--bg-color);
+            padding: 1.5rem 2.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            min-width: 140px;
+            text-align: center;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .action-buttons button {
+            flex: 1;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .overlay-panel {
+            position: fixed;
+            top: 0;
+            right: -450px;
+            width: 450px;
+            height: 100%;
+            background-color: var(--surface-color);
+            border-left: 1px solid var(--border);
+            box-shadow: -5px 0 25px rgba(0,0,0,0.5);
+            transition: right 0.3s ease;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .overlay-panel.open {
+            right: 0;
+        }
+
+        .panel-header {
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-content {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .setting-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75srem;
+        }
+
+        .setting-card label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .checkbox-row input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .level-btn {
+            background: var(--surface-color);
+            border: 1px solid var(--border);
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .level-btn.active {
+            background: var(--accent);
+            color: #0f172a;
+            border-color: var(--accent);
+        }
+
+        .keybind-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--surface-color);
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .key-capture-btn {
+            background: var(--surface-hover);
+            border: 1px solid var(--border);
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.25rem;
+            color: var(--accent);
+            font-weight: 600;
+            cursor: pointer;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .key-capture-btn.listening {
+            background: var(--accent);
+            color: #0f172a;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .welcome-screen {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            align-items: center;
+            max-width: 500px;
+        }
+
+        .welcome-screen h1 {
+            font-size: 1.75rem;
+        }
+
+        .welcome-screen p {
+            color: var(--text-muted);
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        .trial-counter {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        select {
+            background: var(--surface-color);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            width: 100%;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">Long Term Memory Recall</div>
+        <div class="stats-bar">
+            <div class="stat-item">Level: <span id="stat-level">1</span></div>
+            <div class="stat-item">Accuracy: <span id="stat-acc">100%</span></div>
+            <div class="stat-item">Trial: <span id="stat-trial">0/32</span></div>
+        </div>
+        <div class="nav-buttons">
+            <button id="btn-settings">Settings</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="stage" id="game-stage">
+            <!-- Welcome / Instructions Screen -->
+            <div class="welcome-screen" id="welcome-screen">
+                <h1>Posner Mixed Task Training</h1>
+                <p>Train how quickly your brain looks up facts and meanings. You will see a cue (e.g. Physical or Meaning), followed by a pair of items. Judge whether they match according to the rule!</p>
+                <button class="primary" id="btn-start" style="padding: 0.75rem 2rem; font-size: 1rem;">Start Session</button>
+            </div>
+
+            <!-- Rule / Fixation Screen -->
+            <div class="welcome-screen hidden" id="rule-screen">
+                <div class="trial-counter" id="rule-trial-counter">Trial 1 of 32</div>
+                <div class="cue-text" id="rule-cue-box" style="font-size: 1.75rem;">Rule: MEANING</div>
+                <p id="rule-instruction-hint">Get ready...</p>
+                <button id="btn-ready" class="hidden">Press Space or Click to Begin Trial</button>
+            </div>
+
+            <!-- Active Training Screen -->
+            <div class="training-container hidden" id="training-container">
+                <div class="trial-counter" id="game-trial-counter">Trial 1 of 32</div>
+                <div class="cue-text" id="cue-display">Rule: Meaning</div>
+                <div class="stimulus-container">
+                    <div class="stimulus-box" id="stimulus-left">4</div>
+                    <div class="stimulus-box" id="stimulus-right">IV</div>
+                </div>
+                <div class="action-buttons">
+                    <button id="btn-same">Same (<span id="lbl-key-same">S</span>)</button>
+                    <button id="btn-diff">Different (<span id="lbl-key-diff">D</span>)</button>
+                </div>
+            </div>
+
+            <!-- Session Summary Screen -->
+            <div class="welcome-screen hidden" id="summary-screen">
+                <h1>Session Complete!</h1>
+                <p id="summary-stats-text">Great job maintaining your cognitive pacing.</p>
+                <button class="primary" id="btn-restart">Start New Session</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Settings Panel -->
+    <div class="overlay-panel" id="settings-panel">
+        <div class="panel-header">
+            <h3>Session Settings</h3>
+            <button id="btn-close-settings">Close</button>
+        </div>
+        <div class="panel-content">
+            <!-- Training Mode -->
+            <div class="setting-card">
+                <label>Training Mode</label>
+                <select id="setting-training-mode">
+                    <option value="progressive">Progressive (Adaptive difficulty)</option>
+                    <option value="manual">Manual (Fixed level choice)</option>
+                </select>
+            </div>
+
+            <!-- Multi Mode Toggle -->
+            <div class="setting-card">
+                <label class="checkbox-row">
+                    <input type="checkbox" id="setting-multimode">
+                    <span>Multi Mode (Include semantic relationships alongside classic numbers)</span>
+                </label>
+            </div>
+
+            <!-- Rule Screen Auto-Advance -->
+            <div class="setting-card">
+                <label for="setting-auto-advance">Rule Screen Auto-Advance Delay</label>
+                <select id="setting-auto-advance">
+                    <option value="0">Manual (Press Space/Click)</option>
+                    <option value="1">1 second</option>
+                    <option value="1.5">1.5 seconds</option>
+                    <option value="2">2 seconds</option>
+                </select>
+            </div>
+
+            <!-- Sound Effects -->
+            <div class="setting-card">
+                <label class="checkbox-row">
+                    <input type="checkbox" id="setting-sound" checked>
+                    <span>Sound Effects (Play audio cues for feedback)</span>
+                </label>
+            </div>
+
+            <!-- Difficulty Level Selection -->
+            <div class="setting-card" id="manual-level-card">
+                <label>Select Starting / Fixed Difficulty Level (1 - 10)</label>
+                <div class="level-grid" id="level-grid">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Keybindings -->
+            <div class="setting-card">
+                <label>Keybindings Customization</label>
+                <div class="keybind-row" style="margin-top: 0.5rem;">
+                    <span>Same Action</span>
+                    <button class="key-capture-btn" id="bind-same" data-action="same">S</button>
+                </div>
+                <div class="keybind-row" style="margin-top: 0.5rem;">
+                    <span>Different Action</span>
+                    <button class="key-capture-btn" id="bind-diff" data-action="diff">D</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Application State
+        const state = {
+            level: 5,
+            correctCount: 0,
+            totalCount: 0,
+            currentTrialIndex: 0,
+            maxTrials: 32,
+            isRunning: false,
+            phase: 'welcome', // welcome, rule, stimulus, summary
+            autoAdvanceTimer: null,
+            settings: {
+                trainingMode: 'progressive', // 'progressive' or 'manual'
+                multiMode: false,
+                autoAdvanceDelay: 1, // in seconds, 0 means manual
+                soundEnabled: true,
+                fixedLevel: 5,
+                sameKey: 'KeyS',
+                sameKeyLabel: 'S',
+                diffKey: 'KeyD',
+                diffKeyLabel: 'D'
+            },
+            currentTrialData: {
+                rule: '',
+                left: '',
+                right: '',
+                isSame: false
+            },
+            listeningForBinding: null
+        };
+
+        // Audio Context for synthetic feedback beeps
+        let audioCtx = null;
+        function playTone(success) {
+            if (!state.settings.soundEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = success ? 'sine' : 'sawtooth';
+                osc.frequency.setValueAtTime(success ? 587.33 : 220, audioCtx.currentTime); // D5 vs A3
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.15);
+            } catch(e) {
+                // Audio context policy fallback
+            }
+        }
+
+        // DOM Elements
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const ruleScreen = document.getElementById('rule-screen');
+        const trainingContainer = document.getElementById('training-container');
+        const summaryScreen = document.getElementById('summary-screen');
+
+        const startBtn = document.getElementById('btn-start');
+        const restartBtn = document.getElementById('btn-restart');
+        const readyBtn = document.getElementById('btn-ready');
+        const settingsBtn = document.getElementById('btn-settings');
+        const closeSettingsBtn = document.getElementById('btn-close-settings');
+        const settingsPanel = document.getElementById('settings-panel');
+
+        const ruleCueBox = document.getElementById('rule-cue-box');
+        const ruleTrialCounter = document.getElementById('rule-trial-counter');
+        const gameTrialCounter = document.getElementById('game-trial-counter');
+        const ruleInstructionHint = document.getElementById('rule-instruction-hint');
+
+        const cueDisplay = document.getElementById('cue-display');
+        const stimulusLeft = document.getElementById('stimulus-left');
+        const stimulusRight = document.getElementById('stimulus-right');
+        const sameBtn = document.getElementById('btn-same');
+        const diffBtn = document.getElementById('btn-diff');
+        const lblKeySame = document.getElementById('lbl-key-same');
+        const lblKeyDiff = document.getElementById('lbl-key-diff');
+
+        const bindSameBtn = document.getElementById('bind-same');
+        const bindDiffBtn = document.getElementById('bind-diff');
+        const settingTrainingMode = document.getElementById('setting-training-mode');
+        const settingMultimode = document.getElementById('setting-multimode');
+        const settingAutoAdvance = document.getElementById('setting-auto-advance');
+        const settingSound = document.getElementById('setting-sound');
+        const levelGrid = document.getElementById('level-grid');
+        const manualLevelCard = document.getElementById('manual-level-card');
+
+        const statLevel = document.getElementById('stat-level');
+        const statAcc = document.getElementById('stat-acc');
+        const statTrial = document.getElementById('stat-trial');
+        const summaryStatsText = document.getElementById('summary-stats-text');
+
+        // Build Level Grid buttons (1 to 10 with half steps)
+        function buildLevelGrid() {
+            levelGrid.innerHTML = '';
+            const levels = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
+            levels.forEach(lvl => {
+                const btn = document.createElement('button');
+                btn.className = `level-btn ${state.settings.fixedLevel === lvl ? 'active' : ''}`;
+                btn.textContent = lvl;
+                btn.addEventListener('click', () => {
+                    state.settings.fixedLevel = lvl;
+                    if (state.settings.trainingMode === 'manual') {
+                        state.level = lvl;
+                        statLevel.textContent = lvl;
+                    }
+                    saveStorage();
+                    buildLevelGrid();
+                });
+                levelGrid.appendChild(btn);
+            });
+        }
+
+        // Storage Management
+        function loadStorage() {
+            const saved = localStorage.getItem('posner_trainer_settings');
+            if (saved) {
+                state.settings = JSON.parse(saved);
+                updateKeybindLabels();
+                settingTrainingMode.value = state.settings.trainingMode;
+                settingMultimode.checked = state.settings.multiMode;
+                settingAutoAdvance.value = state.settings.autoAdvanceDelay;
+                settingSound.checked = state.settings.soundEnabled;
+                if (state.settings.trainingMode === 'manual') {
+                    state.level = state.settings.fixedLevel;
+                }
+            }
+            statLevel.textContent = state.level;
+            buildLevelGrid();
+        }
+
+        function saveStorage() {
+            localStorage.setItem('posner_trainer_settings', JSON.stringify(state.settings));
+        }
+
+        function updateKeybindLabels() {
+            lblKeySame.textContent = state.settings.sameKeyLabel;
+            lblKeyDiff.textContent = state.settings.diffKeyLabel;
+            bindSameBtn.textContent = state.settings.sameKeyLabel;
+            bindDiffBtn.textContent = state.settings.diffKeyLabel;
+        }
+
+        // Keybinding Customization Capture
+        document.querySelectorAll('.key-capture-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const action = e.target.getAttribute('data-action');
+                state.listeningForBinding = action;
+                e.target.textContent = 'Press key...';
+                e.target.classList.add('listening');
+            });
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (state.listeningForBinding) {
+                e.preventDefault();
+                const action = state.listeningForBinding;
+                let label = e.key.toUpperCase();
+                if (e.key === ' ') label = 'SPACE';
+                
+                if (action === 'same') {
+                    state.settings.sameKey = e.code;
+                    state.settings.sameKeyLabel = label;
+                } else if (action === 'diff') {
+                    state.settings.diffKey = e.code;
+                    state.settings.diffKeyLabel = label;
+                }
+
+                document.querySelectorAll('.key-capture-btn').forEach(b => b.classList.remove('listening'));
+                state.listeningForBinding = null;
+                updateKeybindLabels();
+                saveStorage();
+                return;
+            }
+
+            // Handle Space to advance rule screen if manual advance is chosen
+            if (state.phase === 'rule' && state.settings.autoAdvanceDelay == 0 && (e.code === 'Space' || e.code === state.settings.sameKey || e.code === state.settings.diffKey)) {
+                e.preventDefault();
+                advanceToStimulus();
+                return;
+            }
+
+            // Game Action Key listeners during active training
+            if (state.phase !== 'stimulus') return;
+
+            if (e.code === state.settings.sameKey) {
+                handleUserChoice(true);
+            } else if (e.code === state.settings.diffKey) {
+                handleUserChoice(false);
+            }
+        });
+
+        // Settings Event Listeners
+        settingsBtn.addEventListener('click', () => settingsPanel.classList.add('open'));
+        closeSettingsBtn.addEventListener('click', () => settingsPanel.classList.remove('open'));
+
+        settingTrainingMode.addEventListener('change', (e) => {
+            state.settings.trainingMode = e.target.value;
+            if (e.target.value === 'manual') {
+                state.level = state.settings.fixedLevel;
+            }
+            statLevel.textContent = state.level;
+            saveStorage();
+        });
+
+        settingMultimode.addEventListener('change', (e) => {
+            state.settings.multiMode = e.target.checked;
+            saveStorage();
+        });
+
+        settingAutoAdvance.addEventListener('change', (e) => {
+            state.settings.autoAdvanceDelay = parseFloat(e.target.value);
+            saveStorage();
+        });
+
+        settingSound.addEventListener('change', (e) => {
+            state.settings.soundEnabled = e.target.checked;
+            saveStorage();
+        });
+
+        // Session Flow Control
+        startBtn.addEventListener('click', startSession);
+        restartBtn.addEventListener('click', startSession);
+        readyBtn.addEventListener('click', advanceToStimulus);
+
+        function startSession() {
+            state.currentTrialIndex = 0;
+            state.correctCount = 0;
+            state.totalCount = 0;
+            if (state.settings.trainingMode === 'manual') {
+                state.level = state.settings.fixedLevel;
+            } else {
+                state.level = 1; // Start progressive at level 1
+            }
+            statLevel.textContent = state.level;
+            
+            welcomeScreen.classList.add('hidden');
+            summaryScreen.classList.add('hidden');
+            settingsPanel.classList.remove('open');
+            
+            nextTrial();
+        }
+
+        function nextTrial() {
+            if (state.currentTrialIndex >= state.maxTrials) {
+                endSession();
+                return;
+            }
+
+            state.currentTrialIndex++;
+            statTrial.textContent = `${state.currentTrialIndex}/${state.maxTrials}`;
+            ruleTrialCounter.textContent = `Trial ${state.currentTrialIndex} of ${state.maxTrials}`;
+            gameTrialCounter.textContent = `Trial ${state.currentTrialIndex} of ${state.maxTrials}`;
+
+            // Generate Trial Stimulus & Rule
+            generateTrialContent();
+
+            // Show Rule Screen First
+            state.phase = 'rule';
+            ruleScreen.classList.remove('hidden');
+            trainingContainer.classList.add('hidden');
+
+            ruleCueBox.textContent = `Rule: ${state.currentTrialData.rule.toUpperCase()}`;
+
+            if (state.settings.autoAdvanceDelay > 0) {
+                ruleInstructionHint.textContent = `Proceeding in ${state.settings.autoAdvanceDelay}s...`;
+                readyBtn.classList.add('hidden');
+                clearTimeout(state.autoAdvanceTimer);
+                state.autoAdvanceTimer = setTimeout(() => {
+                    if (state.phase === 'rule') {
+                        advanceToStimulus();
+                    }
+                }, state.settings.autoAdvanceDelay * 1000);
+            } else {
+                ruleInstructionHint.textContent = `Press Space or click below when ready.`;
+                readyBtn.classList.remove('hidden');
+            }
+        }
+
+        function advanceToStimulus() {
+            clearTimeout(state.autoAdvanceTimer);
+            state.phase = 'stimulus';
+            ruleScreen.classList.add('hidden');
+            trainingContainer.classList.remove('hidden');
+
+            cueDisplay.textContent = `Rule: ${state.currentTrialData.rule.toUpperCase()}`;
+            stimulusLeft.textContent = state.currentTrialData.left;
+            stimulusRight.textContent = state.currentTrialData.right;
+        }
+
+        function generateTrialContent() {
+            // Rules: 'physical' or 'meaning' (plus semantic if multi-mode)
+            const rules = state.settings.multiMode ? ['physical', 'meaning', 'semantic'] : ['physical', 'meaning'];
+            const rule = rules[Math.floor(Math.random() * rules.length)];
+            state.currentTrialData.rule = rule;
+
+            const isSame = Math.random() > 0.5;
+            state.currentTrialData.isSame = isSame;
+
+            if (rule === 'physical') {
+                // e.g., digit vs digit or word vs word
+                const pairs = [
+                    { l: '4', r: '4', same: true },
+                    { l: 'FOUR', r: 'FOUR', same: true },
+                    { l: '7', r: '9', same: false },
+                    { l: 'THREE', r: 'FIVE', same: false },
+                    { l: '2', r: 'SEVEN', same: false }
+                ];
+                const chosen = pairs[Math.floor(Math.random() * pairs.length)];
+                // Force match target if needed
+                if (isSame) {
+                    state.currentTrialData.left = '4';
+                    state.currentTrialData.right = '4';
+                } else {
+                    state.currentTrialData.left = '4';
+                    state.currentTrialData.right = 'FOUR';
+                }
+            } else if (rule === 'meaning') {
+                // e.g., digit paired with word representation of number
+                const numPairs = [
+                    { d: '2', w: 'TWO' },
+                    { d: '4', w: 'FOUR' },
+                    { d: '7', w: 'SEVEN' },
+                    { d: '9', w: 'NINE' }
+                ];
+                const p1 = numPairs[Math.floor(Math.random() * numPairs.length)];
+                state.currentTrialData.left = p1.d;
+
+                if (isSame) {
+                    state.currentTrialData.right = p1.w;
+                } else {
+                    const p2 = numPairs.filter(p => p.d !== p1.d)[0];
+                    state.currentTrialData.right = p2.w;
+                }
+            } else {
+                // Semantic relationships (Multi Mode)
+                const semanticPairs = [
+                    { l: 'APPLE', r: 'FRUIT', same: true },
+                    { l: 'DOG', r: 'ANIMAL', same: true },
+                    { l: 'CHAIR', r: 'VEHICLE', same: false },
+                    { l: 'PARIS', r: 'CAPITAL', same: true }
+                ];
+                const sp = semanticPairs[Math.floor(Math.random() * semanticPairs.length)];
+                state.currentTrialData.left = sp.l;
+                state.currentTrialData.right = isSame ? sp.r : (sp.same ? 'TABLE' : 'FRUIT');
+                state.currentTrialData.isSame = isSame;
+            }
+        }
+
+        function handleUserChoice(userGuessedSame) {
+            if (state.phase !== 'stimulus') return;
+
+            state.totalCount++;
+            const correct = (userGuessedSame === state.currentTrialData.isSame);
+            if (correct) {
+                state.correctCount++;
+                playTone(true);
+            } else {
+                playTone(false);
+            }
+
+            // Update stats display
+            const accuracy = Math.round((state.correctCount / state.totalCount) * 100);
+            statAcc.textContent = `${accuracy}%`;
+
+            // Adaptive difficulty adjustment if in progressive mode
+            if (state.settings.trainingMode === 'progressive') {
+                if (correct && state.level < 10) state.level = Math.min(10, +(state.level + 0.1).toFixed(1));
+                else if (!correct && state.level > 1) state.level = Math.max(1, +(state.level - 0.2).toFixed(1));
+                statLevel.textContent = state.level;
+            }
+
+            // Proceed to next trial after short pause
+            setTimeout(() => {
+                nextTrial();
+            }, 300);
+        }
+
+        sameBtn.addEventListener('click', () => handleUserChoice(true));
+        diffBtn.addEventListener('click', () => handleUserChoice(false));
+
+        function endSession() {
+            state.phase = 'summary';
+            trainingContainer.classList.add('hidden');
+            summaryScreen.classList.remove('hidden');
+
+            const finalAcc = state.totalCount > 0 ? Math.round((state.correctCount / state.totalCount) * 100) : 0;
+            summaryStatsText.innerHTML = `You completed all 32 trials with an overall accuracy of <strong>${finalAcc}%</strong>. Consistency over time builds faster memory retrieval!`;
+        }
+
+        // Initialize App on load
+        loadStorage();
+    </script>
 </body>
 </html>
