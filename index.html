@@ -16,6 +16,7 @@
             --danger: #ef4444;
             --success: #22c55e;
             --border: #334155;
+            --warning: #f59e0b;
         }
 
         * {
@@ -34,7 +35,6 @@
             overflow-x: hidden;
         }
 
-        /* Dedicated Flash Overlay for distinct colors */
         #flash-overlay {
             position: fixed;
             top: 0;
@@ -80,11 +80,23 @@
             gap: 1.5rem;
             font-size: 0.9rem;
             color: var(--text-muted);
+            align-items: center;
         }
 
         .stat-item span {
             color: var(--text-main);
             font-weight: 600;
+        }
+        
+        .timer-display {
+            background-color: rgba(56, 189, 248, 0.1);
+            color: var(--accent);
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-family: monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border: 1px solid rgba(56, 189, 248, 0.3);
         }
 
         .nav-buttons {
@@ -201,7 +213,6 @@
             font-weight: 600;
         }
 
-        /* Screen States */
         .screen {
             text-align: center;
             display: flex;
@@ -251,7 +262,6 @@
             color: var(--accent);
         }
 
-        /* Modals & Panels */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -330,6 +340,22 @@
             font-size: 0.875rem;
             color: var(--text-muted);
             font-weight: 500;
+        }
+        
+        .setting-inline-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .setting-inline-group input[type="number"] {
+            width: 60px;
+            background: var(--surface-color);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 0.375rem;
+            border-radius: 0.375rem;
+            text-align: center;
         }
 
         .checkbox-row {
@@ -444,10 +470,11 @@
     <header>
         <div class="logo" id="nav-logo">Semantic LTMR</div>
         <div class="stats-bar">
+            <div id="timer-container" class="timer-display hidden">00:00</div>
             <div class="stat-item">Today: <span id="stat-daily-sessions">0</span></div>
             <div class="stat-item">Level: <span id="stat-level">1</span></div>
             <div class="stat-item">Accuracy: <span id="stat-acc">100%</span></div>
-            <div class="stat-item">Trial: <span id="stat-trial">0/32</span></div>
+            <div class="stat-item">Trial: <span id="stat-trial">0</span></div>
         </div>
         <div class="nav-buttons">
             <button id="btn-pause" class="hidden">Pause</button>
@@ -458,7 +485,6 @@
 
     <main>
         <div class="stage" id="game-stage">
-            <!-- Dashboard Screen -->
             <div class="screen" id="dashboard-screen">
                 <h1>Semantic Long-Term Memory & Attention Switching</h1>
                 <p>Train rapid semantic lookup, inhibition control, and peripheral vigilance without sub-vocalization crutches.</p>
@@ -483,31 +509,28 @@
                 <button class="primary" id="btn-start-from-dash" style="padding: 0.75rem 2rem; font-size: 1rem;">Start Session (Press Spacebar)</button>
             </div>
 
-            <!-- Welcome Screen -->
             <div class="screen hidden" id="welcome-screen">
                 <h1>Posner Mixed Task</h1>
                 <p>Rapidly judge stimulus relations according to the active rule. Pacing is continuous to force instant retrieval intuition. Misses or wrong answers incur a red error flash.</p>
                 <button class="primary" id="btn-start" style="padding: 0.75rem 2rem; font-size: 1rem;">Start Session (Press Space)</button>
             </div>
 
-            <!-- Pause Screen -->
             <div class="screen hidden" id="pause-screen">
                 <h1>Session Paused</h1>
                 <p>Take a breath. Ready to jump back into the flow?</p>
                 <button class="primary" id="btn-resume" style="padding: 0.75rem 2rem; font-size: 1rem;">Resume Session (Press P / Esc)</button>
+                <button style="margin-top: 1rem;" id="btn-abort-session">End Session Now</button>
             </div>
 
-            <!-- Rule / Fixation Screen -->
             <div class="screen hidden" id="rule-screen">
-                <div class="trial-counter" id="rule-trial-counter">Trial 1 of 32</div>
+                <div class="trial-counter" id="rule-trial-counter">Trial 1</div>
                 <div class="cue-text" id="rule-cue-box" style="font-size: 1.75rem;">Rule: MEANING</div>
                 <p id="rule-instruction-hint">Get ready...</p>
                 <button id="btn-ready" class="hidden">Press Space or Click to Begin Trial</button>
             </div>
 
-            <!-- Active Training Screen -->
             <div class="screen hidden" id="training-container">
-                <div class="trial-counter" id="game-trial-counter">Trial 1 of 32</div>
+                <div class="trial-counter" id="game-trial-counter">Trial 1</div>
                 <div class="cue-text" id="cue-display">Rule: Meaning</div>
                 <div class="stimulus-container" id="stimulus-placement-area">
                     <div class="stimulus-box" id="stimulus-left">4</div>
@@ -521,7 +544,6 @@
         </div>
     </main>
 
-    <!-- Post-Session Summary Modal Popup -->
     <div class="modal-overlay hidden" id="summary-modal">
         <div class="modal-content" id="summary-modal-content">
             <h1>Session Complete!</h1>
@@ -530,23 +552,44 @@
         </div>
     </div>
 
-    <!-- Settings Panel -->
     <div class="overlay-panel" id="settings-panel">
         <div class="panel-header">
             <h3>Tool Settings</h3>
             <button id="btn-close-settings">Close</button>
         </div>
         <div class="panel-content">
-            <!-- Training Mode -->
+            <!-- Pacing & Length Mode -->
             <div class="setting-card">
-                <label>Pacing Mode</label>
-                <select id="setting-training-mode">
-                    <option value="adaptive">Adaptive</option>
-                    <option value="manual">Manual (Fixed level)</option>
+                <label>Session Length</label>
+                <select id="setting-session-length">
+                    <option value="32">32 Trials (Fixed Length)</option>
+                    <option value="300">5 Minutes Continuous</option>
+                    <option value="600">10 Minutes Continuous</option>
+                    <option value="900">15 Minutes Continuous</option>
                 </select>
             </div>
 
-            <!-- Mode Selector -->
+            <div class="setting-card">
+                <label>Level Progression Logic</label>
+                <select id="setting-progression-mode">
+                    <option value="normal">Normal (91% end-session to Level Up. 3 fails to Drop)</option>
+                    <option value="adaptive">Adaptive (PASAT-Style Streaks)</option>
+                    <option value="manual">Manual (Fixed Level)</option>
+                </select>
+                
+                <div id="adaptive-controls" class="hidden" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                    <label>Adaptive Settings (PASAT)</label>
+                    <div class="setting-inline-group" style="margin-top:0.5rem; justify-content: space-between;">
+                        <span>Consecutive Wins to Level Up:</span>
+                        <input type="number" id="setting-adaptive-up" min="1" max="50" value="5">
+                    </div>
+                    <div class="setting-inline-group" style="margin-top:0.5rem; justify-content: space-between;">
+                        <span>Consecutive Misses to Level Down:</span>
+                        <input type="number" id="setting-adaptive-down" min="1" max="50" value="3">
+                    </div>
+                </div>
+            </div>
+
             <div class="setting-card">
                 <label>Task Modes</label>
                 <div class="checkbox-row" style="margin-top: 0.5rem;">
@@ -563,7 +606,6 @@
                 </div>
             </div>
 
-            <!-- Experimental Features -->
             <div class="setting-card">
                 <label>Advanced Modifiers</label>
                 <div class="checkbox-row" style="margin-top: 0.5rem;">
@@ -580,40 +622,11 @@
                 </div>
             </div>
 
-            <!-- Language / Localization -->
             <div class="setting-card">
-                <label>Numeral Language Support</label>
-                <select id="setting-language">
-                    <option value="en">English (Numbers & Words)</option>
-                    <option value="es">Spanish (Uno, Dos, Tres...)</option>
-                    <option value="zh">Chinese Numerals (一, 二, 三...)</option>
-                </select>
-            </div>
-
-            <!-- Custom Word Pairs -->
-            <div class="setting-card">
-                <label>Custom Word Pairs (JSON format)</label>
-                <textarea id="setting-custom-pairs" placeholder='[{"l":"A","r":"B","rule":"meaning","isSame":true}]'></textarea>
-            </div>
-
-            <!-- Rule Screen Delay -->
-            <div class="setting-card">
-                <label for="setting-auto-advance">Rule Display Delay</label>
-                <select id="setting-auto-advance">
-                    <option value="0.75">0.75 seconds</option>
-                    <option value="1.25" selected>1.25 seconds</option>
-                    <option value="2">2 seconds</option>
-                    <option value="0">Manual Click / Spacebar</option>
-                </select>
-            </div>
-
-            <!-- Manual Level Selection -->
-            <div class="setting-card" id="manual-level-card">
-                <label>Starting / Fixed Level Selection (Clicking sets starting point in adaptive mode)</label>
+                <label>Manual Level Override (Sets Start Point)</label>
                 <div class="level-grid" id="level-grid"></div>
             </div>
 
-            <!-- Keybindings -->
             <div class="setting-card">
                 <label>Keybindings Customization</label>
                 <div class="keybind-row" style="margin-top: 0.5rem;">
@@ -631,98 +644,14 @@
     <script>
         const ALL_LEVELS = [1, 2, 3, 4, 5, 6, 7, 7.5, 8, 8.5, 9, 10, 11, 12, 13];
 
-        const AFFECTIVE_WORD_BANK = {
-            threat: [
-                "TERROR", "PANIC", "AGONY", "HORROR", "SLAUGHTER",
-                "SUFFOCATION", "FATAL", "RAGE", "SCREAM", "TORTURE",
-                "SHELTERLESS", "EXECUTION", "EXPLOSION", "DISASTER", "AMBUSH",
-                "HOSTAGE", "CHAOS", "MUTILATION", "VIOLENCE", "CRUELTY",
-                "MASSACRE", "ASSAULT", "PERISH", "STRANGLE", "VENOM",
-                "ANNIHILATION", "BLOODBATH", "DECIMATE", "AMPUTATE", "STRANGULATION",
-                "PARALYSIS", "HEMORRHAGE", "ASPHYXIATION", "BUTCHERY", "CARNAGE"
-            ],
-            grief: [
-                "DESPAIR", "ANGUISH", "BETRAYAL", "ISOLATION", "ABANDONED",
-                "DEVASTATION", "TRAGEDY", "MISERY", "GRIEF", "HEARTBREAK",
-                "LONELINESS", "HOPELESS", "SHATTERED", "HELPLESS", "LOSS",
-                "REGRET", "CONDEMNED", "RUIN", "REJECTION", "MOURNING",
-                "ORPHANED", "DESTITUTE", "FORSAKEN", "HOLLOW", "EXILE",
-                "DESOLATE", "CREMATION", "BEREAVED", "CONSUMED",
-                "DECAYING", "STARK", "UNLAMENTED", "GODFORSAKEN", "INCURABLE"
-            ],
-            visceral: [
-                "REVULSION", "DECAY", "CORRUPTION", "FOUL", "ROT",
-                "CONTAMINATION", "NAUSEA", "INFESTATION", "POISON", "SICKNESS",
-                "SEWAGE", "INFECTION", "MAGGOT", "FILTH", "SMEAR",
-                "DISEASE", "PUTRID", "TOXIC", "DRAIN", "CANCER",
-                "ULCER", "GORE", "BILE", "SEPTIC", "GANGRANE",
-                "NECROSIS", "BIOLOGICAL", "EXUDATE", "PUS", "VISCERA",
-                "MUCUS", "BIOMASS", "CONTAMINATED", "SORDID", "ULCEROUS"
-            ],
-            intensePositive: [
-                "ECSTASY", "EUPHORIA", "RAPTURE", "PASSION", "BLISS",
-                "TRIUMPH", "OBSESSION", "ADRENALINE", "EXHILARATION", "DEVOTION",
-                "PARADISE", "DELIGHT", "THRILL", "VICTORY", "BELOVED",
-                "INTOXICATION", "DESIRE", "CHERISH", "INFATUATION", "FEAST",
-                "IMMORTAL", "SUPREME", "INVINCIBLE", "EUPHORIC",
-                "APEX", "ELECTRIC", "UNSTOPPABLE", "GODLIKE", "TRANSCENDENT",
-                "MAGNIFICENT", "UNBOUND", "SUPREMACY", "PHENOMENAL", "BLINDING"
-            ],
-            ambiguousShock: [
-                "VOID", "UNHINGED", "HYSTERIA", "PARANOIA", "VULNERABLE",
-                "CONFESSION", "SURREAL", "JUDGMENT", "REVELATION", "FATUM",
-                "STALKER", "SECRETS", "HALLUCINATION", "OBSCURITY", "DELUSION",
-                "SHADOW", "ECHO", "SUSPITION", "INVASION", "CONTAGION",
-                "GLITCH", "ANOMALY", "MIRAGE", "DECEPTION", "PANOPTICON",
-                "SCHIZOID", "LABYRINTH", "DISLOCATION", "WHISPER", "DOPPELGANGER",
-                "UNCONSCIOUS", "AMNESIA", "SOMNAMBULIST", "PARALYSIS", "CIPHER"
-            ],
-            socialIsolation: [
-                "IGNORED", "ABANDONED", "ISOLATED", "REJECTED", "EXCLUDED",
-                "ALONE", "UNWANTED", "FORGOTTEN", "DISTANT", "OUTCAST",
-                "INVISIBLE", "UNSEEN", "OSTRACIZED", "PARIAH", "EXILED",
-                "QUARANTINED", "GHOST", "UNMOURNED", "REMOVED", "NULLIFIED",
-                "DETACHED", "STRANDED", "EXTINCTION", "MONAD", "ANONYMOUS"
-            ],
-            sexual: [
-                "CARNAL", "LUST", "ECSTATIC", "INTIMATE", "TEMPTATION",
-                "SEDUCTION", "FLESH", "FORBIDDEN", "YEARNING", "ORGASM",
-                "BONDAGE", "SKIN", "WARMTH", "HUNGER", "DOMINION",
-                "SURRENDER", "POSSESSION", "MOAN", "BREATH", "RAPTURE",
-                "FETISH", "OBSESSION", "ENTWINED", "EXPOSED", "APHRODISIAC",
-                "SAVAGE", "LASCIVIOUS", "RAW", "GRAZING", "VOLUPTUOUS"
-            ],
-            spiritualSacred: [
-                "SACRED", "DIVINE", "INFINITY", "ETERNAL", "TRANSCENDENT",
-                "HOLY", "SOUL", "REDEMPTION", "BLINDING", "REVELATION",
-                "SANCTUARY", "HALO", "ABSOLUTE", "GRACE", "PURITY",
-                "COSMIC", "DAMNATION", "ALTAR", "PRAYER", "GLORY",
-                "BLASPHEMY", "SERAPHIM", "MARTYRDOM", "ZEALOT", "APOCALYPSE",
-                "PROPHESY", "OMNIPOTENT", "SANCTIFIED", "EXCOMMUNICATED", "DIVINITY"
-            ],
-            existentialDread: [
-                "OBSOLETE", "MEANINGLESS", "NULL", "ABYSS", "PHANTOM",
-                "TRANSIENT", "FUTILE", "INSIGNIFICANT", "ECLIPSE", "TERMINAL",
-                "SILENCE", "WITHER", "VANISH", "SOLIPSISM", "DISSOLUTION",
-                "NOTHINGNESS", "OBLIVION", "ENTROPY", "NIHIL", "ETERNITY",
-                "UNMADE", "VANISHING", "INEVITABLE", "VACUUM", "NONEXISTENT"
-            ],
-            cyberneticHorror: [
-                "OVERRIDE", "CORRUPTED", "MALWARE", "INTEGRITY", "FAIL", "DISCONNECTED",
-                "SYNAPSE", "OVERLOAD", "PARASITE", "INVASION", "ANOMALY",
-                "BLACKBOX", "TERMINATED", "RECURSION", "LOOP", "ERROR",
-                "MUTATED", "UNRESPONSIVE", "BREACH", "ISOLATED", "HOST"
-            ]
-        };
-
         const state = {
             level: 1,
             maxLevelReached: 1,
             correctCount: 0,
             totalCount: 0,
+            consecutiveCorrect: 0,
             consecutiveErrors: 0,
             currentTrialIndex: 0,
-            maxTrials: 32,
             phase: 'dashboard',
             
             inputLocked: false,
@@ -731,16 +660,23 @@
             trialStartTime: 0,
             trialTotalTime: 0,
             
+            sessionStartTime: 0,
+            timeElapsedSeconds: 0,
+            globalTimerInterval: null,
+            
             autoAdvanceTimer: null,
             trialTimeout: null,
             lifetimeStats: {
                 totalSessions: 0,
                 totalTrials: 0,
                 totalCorrect: 0,
-                dailyLogs: {} // { "YYYY-MM-DD": count }
+                dailyLogs: {} 
             },
             settings: {
-                trainingMode: 'adaptive',
+                sessionLength: '32',
+                progressionMode: 'normal',
+                adaptiveUpThreshold: 5,
+                adaptiveDownThreshold: 3,
                 classicMode: true,
                 multiMode: true,
                 affectiveMode: false,
@@ -757,12 +693,7 @@
                 diffKeyLabel: 'D'
             },
             currentTrialData: {
-                rule: '',
-                left: '',
-                right: '',
-                isSame: false,
-                isInverted: false,
-                isAffective: false
+                rule: '', left: '', right: '', isSame: false, isInverted: false, isAffective: false
             },
             listeningForBinding: null
         };
@@ -785,7 +716,6 @@
             } catch(e) {}
         }
 
-        // DOM Elements
         const dashboardScreen = document.getElementById('dashboard-screen');
         const welcomeScreen = document.getElementById('welcome-screen');
         const ruleScreen = document.getElementById('rule-screen');
@@ -802,6 +732,7 @@
         const readyBtn = document.getElementById('btn-ready');
         const btnPause = document.getElementById('btn-pause');
         const btnResume = document.getElementById('btn-resume');
+        const btnAbortSession = document.getElementById('btn-abort-session');
         
         const settingsBtn = document.getElementById('btn-settings');
         const closeSettingsBtn = document.getElementById('btn-close-settings');
@@ -824,22 +755,26 @@
 
         const bindSameBtn = document.getElementById('bind-same');
         const bindDiffBtn = document.getElementById('bind-diff');
-        const settingTrainingMode = document.getElementById('setting-training-mode');
+        
+        const settingSessionLength = document.getElementById('setting-session-length');
+        const settingProgressionMode = document.getElementById('setting-progression-mode');
+        const adaptiveControls = document.getElementById('adaptive-controls');
+        const settingAdaptiveUp = document.getElementById('setting-adaptive-up');
+        const settingAdaptiveDown = document.getElementById('setting-adaptive-down');
+
         const settingClassicMode = document.getElementById('setting-classic-mode');
         const settingMultiMode = document.getElementById('setting-multi-mode');
         const settingAffectiveMode = document.getElementById('setting-affective-mode');
         const settingUfoiv = document.getElementById('setting-ufoiv');
         const settingInversion = document.getElementById('setting-inversion');
         const settingSound = document.getElementById('setting-sound');
-        const settingLanguage = document.getElementById('setting-language');
-        const settingCustomPairs = document.getElementById('setting-custom-pairs');
-        const settingAutoAdvance = document.getElementById('setting-auto-advance');
         const levelGrid = document.getElementById('level-grid');
 
         const statLevel = document.getElementById('stat-level');
         const statAcc = document.getElementById('stat-acc');
         const statTrial = document.getElementById('stat-trial');
         const statDailySessions = document.getElementById('stat-daily-sessions');
+        const timerContainer = document.getElementById('timer-container');
         const summaryStatsText = document.getElementById('summary-stats-text');
 
         const dashSessions = document.getElementById('dash-sessions');
@@ -849,30 +784,17 @@
 
         function getTodayKey() {
             const d = new Date();
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-
-        function getTodaySessionsCount() {
-            const today = getTodayKey();
-            if (!state.lifetimeStats.dailyLogs) {
-                state.lifetimeStats.dailyLogs = {};
-            }
-            return state.lifetimeStats.dailyLogs[today] || 0;
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
 
         function buildLevelGrid() {
             levelGrid.innerHTML = '';
             ALL_LEVELS.forEach(lvl => {
                 const btn = document.createElement('button');
-                btn.className = `level-btn ${(state.settings.trainingMode === 'manual' ? state.settings.fixedLevel : state.level) === lvl ? 'active' : ''}`;
+                btn.className = `level-btn ${(state.settings.progressionMode === 'manual' ? state.settings.fixedLevel : state.level) === lvl ? 'active' : ''}`;
                 btn.textContent = lvl;
                 btn.addEventListener('click', () => {
-                    if (state.settings.trainingMode === 'manual') {
-                        state.settings.fixedLevel = lvl;
-                    }
+                    if (state.settings.progressionMode === 'manual') state.settings.fixedLevel = lvl;
                     state.level = lvl;
                     statLevel.textContent = lvl;
                     saveStorage();
@@ -882,54 +804,54 @@
             });
         }
 
+        function toggleAdaptiveControls() {
+            if (state.settings.progressionMode === 'adaptive') {
+                adaptiveControls.classList.remove('hidden');
+            } else {
+                adaptiveControls.classList.add('hidden');
+            }
+        }
+
         function loadStorage() {
-            const saved = localStorage.getItem('sem_ltmr_settings');
+            const saved = localStorage.getItem('sem_ltmr_settings_v2');
             if (saved) {
-                state.settings = JSON.parse(saved);
+                const parsed = JSON.parse(saved);
+                state.settings = { ...state.settings, ...parsed };
                 updateKeybindLabels();
-                settingTrainingMode.value = state.settings.trainingMode;
+                settingSessionLength.value = state.settings.sessionLength;
+                settingProgressionMode.value = state.settings.progressionMode;
+                settingAdaptiveUp.value = state.settings.adaptiveUpThreshold;
+                settingAdaptiveDown.value = state.settings.adaptiveDownThreshold;
                 settingClassicMode.checked = state.settings.classicMode;
                 settingMultiMode.checked = state.settings.multiMode;
                 settingAffectiveMode.checked = !!state.settings.affectiveMode;
                 settingUfoiv.checked = state.settings.ufoiv;
                 settingInversion.checked = state.settings.inversion;
                 settingSound.checked = state.settings.soundEnabled;
-                settingLanguage.value = state.settings.language;
-                settingCustomPairs.value = state.settings.customPairsJson || '';
-                settingAutoAdvance.value = state.settings.autoAdvanceDelay;
             }
             const savedStats = localStorage.getItem('sem_ltmr_stats');
-            if (savedStats) {
-                state.lifetimeStats = JSON.parse(savedStats);
-                if (!state.lifetimeStats.dailyLogs) {
-                    state.lifetimeStats.dailyLogs = {};
-                }
-            }
+            if (savedStats) state.lifetimeStats = JSON.parse(savedStats);
             const savedMax = localStorage.getItem('sem_ltmr_maxlevel');
-            if (savedMax) {
-                state.maxLevelReached = parseFloat(savedMax) || 1;
-            }
+            if (savedMax) state.maxLevelReached = parseFloat(savedMax) || 1;
 
-            if (state.settings.trainingMode === 'manual') {
-                state.level = state.settings.fixedLevel || 1;
-            }
+            if (state.settings.progressionMode === 'manual') state.level = state.settings.fixedLevel || 1;
+            
+            toggleAdaptiveControls();
             statLevel.textContent = state.level;
             updateDashboardDisplay();
             buildLevelGrid();
         }
 
         function saveStorage() {
-            localStorage.setItem('sem_ltmr_settings', JSON.stringify(state.settings));
+            localStorage.setItem('sem_ltmr_settings_v2', JSON.stringify(state.settings));
             localStorage.setItem('sem_ltmr_stats', JSON.stringify(state.lifetimeStats));
             localStorage.setItem('sem_ltmr_maxlevel', state.maxLevelReached.toString());
         }
 
         function updateDashboardDisplay() {
             dashSessions.textContent = state.lifetimeStats.totalSessions;
-            const todayCount = getTodaySessionsCount();
-            dashDailySessions.textContent = todayCount;
-            statDailySessions.textContent = todayCount;
-
+            dashDailySessions.textContent = state.lifetimeStats.dailyLogs[getTodayKey()] || 0;
+            statDailySessions.textContent = dashDailySessions.textContent;
             const lifetimeAcc = state.lifetimeStats.totalTrials > 0 ? Math.round((state.lifetimeStats.totalCorrect / state.lifetimeStats.totalTrials) * 100) : 0;
             dashAccuracy.textContent = `${lifetimeAcc}%`;
             dashLevel.textContent = state.maxLevelReached;
@@ -940,6 +862,12 @@
             lblKeyDiff.textContent = state.settings.diffKeyLabel;
             bindSameBtn.textContent = state.settings.sameKeyLabel;
             bindDiffBtn.textContent = state.settings.diffKeyLabel;
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
         }
 
         function togglePause() {
@@ -988,6 +916,7 @@
 
         btnPause.addEventListener('click', togglePause);
         btnResume.addEventListener('click', togglePause);
+        btnAbortSession.addEventListener('click', endSession);
 
         document.querySelectorAll('.key-capture-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -1012,15 +941,8 @@
                 const action = state.listeningForBinding;
                 let label = e.key.toUpperCase();
                 if (e.key === ' ') label = 'SPACE';
-                
-                if (action === 'same') {
-                    state.settings.sameKey = e.code;
-                    state.settings.sameKeyLabel = label;
-                } else if (action === 'diff') {
-                    state.settings.diffKey = e.code;
-                    state.settings.diffKeyLabel = label;
-                }
-
+                if (action === 'same') { state.settings.sameKey = e.code; state.settings.sameKeyLabel = label; }
+                else if (action === 'diff') { state.settings.diffKey = e.code; state.settings.diffKeyLabel = label; }
                 document.querySelectorAll('.key-capture-btn').forEach(b => b.classList.remove('listening'));
                 state.listeningForBinding = null;
                 updateKeybindLabels();
@@ -1029,42 +951,17 @@
             }
 
             if (e.code === 'KeyP' || e.code === 'Escape') {
-                if (state.phase === 'rule' || state.phase === 'stimulus' || state.phase === 'paused') {
-                    e.preventDefault();
-                    togglePause();
-                    return;
-                }
+                if (['rule', 'stimulus', 'paused'].includes(state.phase)) { e.preventDefault(); togglePause(); return; }
             }
-
             if (e.code === 'Space') {
-                if (state.phase === 'dashboard') {
-                    e.preventDefault();
-                    startSession();
-                    return;
-                } else if (state.phase === 'welcome') {
-                    e.preventDefault();
-                    beginTrialsSequence();
-                    return;
-                } else if (state.phase === 'rule' && state.settings.autoAdvanceDelay == 0 && !state.isPaused) {
-                    e.preventDefault();
-                    advanceToStimulus();
-                    return;
-                }
-            }
-
-            if (state.phase === 'rule' && state.settings.autoAdvanceDelay == 0 && !state.isPaused && (e.code === state.settings.sameKey || e.code === state.settings.diffKey)) {
-                e.preventDefault();
-                advanceToStimulus();
-                return;
+                if (state.phase === 'dashboard') { e.preventDefault(); startSession(); return; }
+                else if (state.phase === 'welcome') { e.preventDefault(); beginTrialsSequence(); return; }
+                else if (state.phase === 'rule' && state.settings.autoAdvanceDelay == 0 && !state.isPaused) { e.preventDefault(); advanceToStimulus(); return; }
             }
 
             if (state.phase !== 'stimulus' || state.isPaused || state.inputLocked) return;
-
-            if (e.code === state.settings.sameKey) {
-                handleUserChoice(true);
-            } else if (e.code === state.settings.diffKey) {
-                handleUserChoice(false);
-            }
+            if (e.code === state.settings.sameKey) handleUserChoice(true);
+            else if (e.code === state.settings.diffKey) handleUserChoice(false);
         });
 
         settingsBtn.addEventListener('click', () => settingsPanel.classList.add('open'));
@@ -1072,28 +969,27 @@
         navLogo.addEventListener('click', showDashboard);
         btnDashboard.addEventListener('click', showDashboard);
 
-        settingTrainingMode.addEventListener('change', (e) => {
-            state.settings.trainingMode = e.target.value;
-            if (e.target.value === 'manual') {
-                state.level = state.settings.fixedLevel;
-            }
+        settingSessionLength.addEventListener('change', (e) => { state.settings.sessionLength = e.target.value; saveStorage(); });
+        settingProgressionMode.addEventListener('change', (e) => { 
+            state.settings.progressionMode = e.target.value; 
+            toggleAdaptiveControls();
+            if (e.target.value === 'manual') state.level = state.settings.fixedLevel;
             statLevel.textContent = state.level;
-            saveStorage();
+            saveStorage(); 
             buildLevelGrid();
         });
+        settingAdaptiveUp.addEventListener('input', (e) => { state.settings.adaptiveUpThreshold = parseInt(e.target.value) || 5; saveStorage(); });
+        settingAdaptiveDown.addEventListener('input', (e) => { state.settings.adaptiveDownThreshold = parseInt(e.target.value) || 3; saveStorage(); });
 
         settingClassicMode.addEventListener('change', (e) => { state.settings.classicMode = e.target.checked; saveStorage(); });
         settingMultiMode.addEventListener('change', (e) => { state.settings.multiMode = e.target.checked; saveStorage(); });
         settingAffectiveMode.addEventListener('change', (e) => { state.settings.affectiveMode = e.target.checked; saveStorage(); });
         settingUfoiv.addEventListener('change', (e) => { state.settings.ufoiv = e.target.checked; saveStorage(); });
         settingInversion.addEventListener('change', (e) => { state.settings.inversion = e.target.checked; saveStorage(); });
-        settingSound.addEventListener('change', (e) => { state.settings.soundEnabled = e.target.checked; saveStorage(); });
-        settingLanguage.addEventListener('change', (e) => { state.settings.language = e.target.value; saveStorage(); });
-        settingCustomPairs.addEventListener('input', (e) => { state.settings.customPairsJson = e.target.value; saveStorage(); });
-        settingAutoAdvance.addEventListener('change', (e) => { state.settings.autoAdvanceDelay = parseFloat(e.target.value); saveStorage(); });
 
         function showDashboard() {
             clearTimers();
+            clearInterval(state.globalTimerInterval);
             state.phase = 'dashboard';
             state.isPaused = false;
             
@@ -1104,31 +1000,19 @@
             pauseScreen.classList.add('hidden');
             trainingContainer.classList.add('hidden');
             summaryModal.classList.add('hidden');
+            timerContainer.classList.add('hidden');
             
             updateDashboardDisplay();
         }
 
         startBtn.addEventListener('click', beginTrialsSequence);
         startFromDashBtn.addEventListener('click', startSession);
+        btnModalClose.addEventListener('click', dismissSummary);
         
         function dismissSummary() {
             summaryModal.classList.add('hidden');
             showDashboard();
         }
-
-        btnModalClose.addEventListener('click', (e) => {
-            e.stopPropagation();
-            dismissSummary();
-        });
-
-        summaryModal.addEventListener('click', () => {
-            dismissSummary();
-        });
-
-        summaryModalContent.addEventListener('click', (e) => {
-            e.stopPropagation();
-            dismissSummary();
-        });
 
         function startSession() {
             dashboardScreen.classList.add('hidden');
@@ -1141,18 +1025,36 @@
             state.currentTrialIndex = 0;
             state.correctCount = 0;
             state.totalCount = 0;
+            state.consecutiveCorrect = 0;
             state.consecutiveErrors = 0;
+            state.timeElapsedSeconds = 0;
             state.isPaused = false;
             
-            if (state.settings.trainingMode === 'manual') {
-                state.level = state.settings.fixedLevel;
-            }
-            
+            if (state.settings.progressionMode === 'manual') state.level = state.settings.fixedLevel;
             statLevel.textContent = state.level;
             
             welcomeScreen.classList.add('hidden');
-            summaryModal.classList.add('hidden');
             btnPause.classList.remove('hidden'); 
+
+            if (state.settings.sessionLength !== '32') {
+                timerContainer.classList.remove('hidden');
+                timerContainer.textContent = formatTime(parseInt(state.settings.sessionLength));
+                state.globalTimerInterval = setInterval(() => {
+                    if (!state.isPaused) {
+                        state.timeElapsedSeconds++;
+                        const limit = parseInt(state.settings.sessionLength);
+                        const remaining = limit - state.timeElapsedSeconds;
+                        timerContainer.textContent = formatTime(remaining);
+                        
+                        if (remaining <= 0) {
+                            clearInterval(state.globalTimerInterval);
+                            endSession();
+                        }
+                    }
+                }, 1000);
+            } else {
+                timerContainer.classList.add('hidden');
+            }
             
             nextTrial();
         }
@@ -1164,15 +1066,16 @@
 
         function nextTrial() {
             clearTimers();
-            if (state.currentTrialIndex >= state.maxTrials) {
+            if (state.settings.sessionLength === '32' && state.currentTrialIndex >= 32) {
                 endSession();
                 return;
             }
 
             state.currentTrialIndex++;
-            statTrial.textContent = `${state.currentTrialIndex}/${state.maxTrials}`;
-            ruleTrialCounter.textContent = `Trial ${state.currentTrialIndex} of ${state.maxTrials}`;
-            gameTrialCounter.textContent = `Trial ${state.currentTrialIndex} of ${state.maxTrials}`;
+            const maxT = state.settings.sessionLength === '32' ? "/32" : "";
+            statTrial.textContent = `${state.currentTrialIndex}${maxT}`;
+            ruleTrialCounter.textContent = `Trial ${state.currentTrialIndex}${maxT}`;
+            gameTrialCounter.textContent = `Trial ${state.currentTrialIndex}${maxT}`;
 
             generateTrialContent();
 
@@ -1183,9 +1086,9 @@
             let ruleLabel = state.currentTrialData.rule.toUpperCase();
             if (state.currentTrialData.isInverted) {
                 ruleLabel += " [INVERTED GO/NO-GO]";
-                ruleCueBox.style.color = varColor('--danger', '#ef4444');
+                ruleCueBox.style.color = 'var(--danger)';
             } else {
-                ruleCueBox.style.color = varColor('--accent', '#38bdf8');
+                ruleCueBox.style.color = 'var(--accent)';
             }
             ruleCueBox.textContent = `Rule: ${ruleLabel}`;
 
@@ -1194,18 +1097,12 @@
                 ruleInstructionHint.textContent = `Proceeding in ${delay}s...`;
                 readyBtn.classList.add('hidden');
                 state.autoAdvanceTimer = setTimeout(() => {
-                    if (state.phase === 'rule' && !state.isPaused) {
-                        advanceToStimulus();
-                    }
+                    if (state.phase === 'rule' && !state.isPaused) advanceToStimulus();
                 }, delay * 1000);
             } else {
-                ruleInstructionHint.textContent = `Press Space or click below when ready.`;
+                ruleInstructionHint.textContent = `Press Space to Begin`;
                 readyBtn.classList.remove('hidden');
             }
-        }
-
-        function varColor(name, fallback) {
-            return getComputedStyle(document.documentElement).getPropertyValue(name) || fallback;
         }
 
         function advanceToStimulus() {
@@ -1216,48 +1113,24 @@
             ruleScreen.classList.add('hidden');
             trainingContainer.classList.remove('hidden');
 
-            let ruleTextHeading = `Rule: ${state.currentTrialData.rule.toUpperCase()}${state.currentTrialData.isInverted ? ' (INVERTED)' : ''}`;
-            if (state.currentTrialData.isAffective) {
-                ruleTextHeading += ' [AFFECTIVE INTERFERENCE]';
-            }
-            cueDisplay.textContent = ruleTextHeading;
-            
+            cueDisplay.textContent = `Rule: ${state.currentTrialData.rule.toUpperCase()}${state.currentTrialData.isInverted ? ' (INVERTED)' : ''}`;
             stimulusLeft.textContent = state.currentTrialData.left;
             stimulusRight.textContent = state.currentTrialData.right;
 
-            if (state.currentTrialData.isAffective) {
-                stimulusLeft.classList.add('affective-distractor');
-                stimulusRight.classList.add('affective-distractor');
-            } else {
-                stimulusLeft.classList.remove('affective-distractor');
-                stimulusRight.classList.remove('affective-distractor');
-            }
-
             if (state.settings.ufoiv) {
-                stimulusLeft.style.position = 'absolute';
-                stimulusRight.style.position = 'absolute';
-                const leftPos = Math.floor(Math.random() * 40) + 5;
-                const rightPos = Math.floor(Math.random() * 40) + 55;
+                stimulusLeft.style.position = 'absolute'; stimulusRight.style.position = 'absolute';
+                stimulusLeft.style.left = `${Math.floor(Math.random() * 40) + 5}%`;
+                stimulusRight.style.left = `${Math.floor(Math.random() * 40) + 55}%`;
                 const topPos = Math.floor(Math.random() * 40) - 20;
-                stimulusLeft.style.left = `${leftPos}%`;
-                stimulusRight.style.left = `${rightPos}%`;
-                stimulusLeft.style.top = `${topPos}px`;
-                stimulusRight.style.top = `${topPos}px`;
+                stimulusLeft.style.top = `${topPos}px`; stimulusRight.style.top = `${topPos}px`;
             } else {
-                stimulusLeft.style.position = 'static';
-                stimulusRight.style.position = 'static';
-                stimulusLeft.style.left = 'auto';
-                stimulusRight.style.left = 'auto';
-                stimulusLeft.style.top = 'auto';
-                stimulusRight.style.top = 'auto';
+                stimulusLeft.style.position = 'static'; stimulusRight.style.position = 'static';
             }
 
             if (state.currentTrialData.isInverted) {
-                stimulusLeft.classList.add('inverted-rule');
-                stimulusRight.classList.add('inverted-rule');
+                stimulusLeft.classList.add('inverted-rule'); stimulusRight.classList.add('inverted-rule');
             } else {
-                stimulusLeft.classList.remove('inverted-rule');
-                stimulusRight.classList.remove('inverted-rule');
+                stimulusLeft.classList.remove('inverted-rule'); stimulusRight.classList.remove('inverted-rule');
             }
 
             const baseTime = 1300 - (state.level * 100);
@@ -1265,200 +1138,85 @@
             state.trialStartTime = Date.now();
             
             state.trialTimeout = setTimeout(() => {
-                if (state.phase === 'stimulus' && !state.isPaused) {
-                    handleUserChoice(null);
-                }
+                if (state.phase === 'stimulus' && !state.isPaused) handleUserChoice(null);
             }, state.trialTotalTime);
         }
 
         function generateTrialContent() {
-            if (state.settings.customPairsJson && state.settings.customPairsJson.trim().length > 2) {
-                try {
-                    const customList = JSON.parse(state.settings.customPairsJson);
-                    if (Array.isArray(customList) && customList.length > 0) {
-                        const cp = customList[Math.floor(Math.random() * customList.length)];
-                        state.currentTrialData.rule = cp.rule || 'meaning';
-                        state.currentTrialData.left = cp.l;
-                        state.currentTrialData.right = cp.r;
-                        state.currentTrialData.isSame = cp.isSame;
-                        state.currentTrialData.isInverted = state.settings.inversion && (Math.random() < 0.25);
-                        state.currentTrialData.isAffective = false;
-                        return;
-                    }
-                } catch(e) {}
-            }
-
-            let availableRules = [];
-            if (state.settings.classicMode) availableRules.push('physical', 'meaning');
-            if (state.settings.multiMode) availableRules.push('synonym', 'category', 'partwhole', 'function', 'color');
-            if (availableRules.length === 0) availableRules = ['meaning'];
-
-            const rule = availableRules[Math.floor(Math.random() * availableRules.length)];
-            state.currentTrialData.rule = rule;
-
+            state.currentTrialData.rule = 'meaning';
+            let l = Math.floor(Math.random() * 9) + 1;
+            let r = Math.floor(Math.random() * 9) + 1;
             let isSame = Math.random() > 0.5;
-            let l = '', r = '';
-
-            const useAffective = state.settings.affectiveMode && (Math.random() < 0.5);
-            state.currentTrialData.isAffective = useAffective;
-
-            if (useAffective) {
-                const categories = Object.keys(AFFECTIVE_WORD_BANK);
-                const randomCat = categories[Math.floor(Math.random() * categories.length)];
-                const wordBank = AFFECTIVE_WORD_BANK[randomCat];
-                l = wordBank[Math.floor(Math.random() * wordBank.length)];
-                
-                if (isSame) {
-                    r = l;
-                } else {
-                    let differentCat = categories[Math.floor(Math.random() * categories.length)];
-                    let diffBank = AFFECTIVE_WORD_BANK[differentCat];
-                    r = diffBank[Math.floor(Math.random() * diffBank.length)];
-                    if (r === l) r = "VOID";
-                }
-            } else {
-                if (rule === 'physical') {
-                    if (isSame) {
-                        l = '7'; r = '7';
-                    } else {
-                        l = '7'; r = getNumWord(7, state.settings.language);
-                    }
-                } else if (rule === 'meaning') {
-                    const num = Math.floor(Math.random() * 9) + 1;
-                    l = num.toString();
-                    if (isSame) {
-                        r = getNumWord(num, state.settings.language);
-                    } else {
-                        let diffNum = (num % 9) + 1;
-                        r = getNumWord(diffNum, state.settings.language);
-                    }
-                } else if (rule === 'synonym') {
-                    const pairs = [
-                        {l: 'FAST', r: 'QUICK', same: true},
-                        {l: 'BIG', r: 'LARGE', same: true},
-                        {l: 'HAPPY', r: 'SAD', same: false},
-                        {l: 'SMART', r: 'BRIGHT', same: true}
-                    ];
-                    const p = pairs[Math.floor(Math.random() * pairs.length)];
-                    l = p.l; r = isSame ? p.r : (p.same ? 'SLOW' : 'HAPPY');
-                    isSame = (r === p.r ? p.same : !p.same);
-                } else if (rule === 'category') {
-                    const pairs = [
-                        {l: 'DOG', r: 'CAT', same: true},
-                        {l: 'APPLE', r: 'ORANGE', same: true},
-                        {l: 'CHAIR', r: 'BANANA', same: false},
-                        {l: 'EAGLE', r: 'SPARROW', same: true}
-                    ];
-                    const p = pairs[Math.floor(Math.random() * pairs.length)];
-                    l = p.l; r = isSame ? p.r : 'TRUCK';
-                    isSame = (r === p.r);
-                } else if (rule === 'partwhole') {
-                    const pairs = [
-                        {l: 'WHEEL', r: 'CAR', same: true},
-                        {l: 'BRANCH', r: 'TREE', same: true},
-                        {l: 'SCREEN', r: 'BOOK', same: false},
-                        {l: 'KEY', r: 'PIANO', same: true}
-                    ];
-                    const p = pairs[Math.floor(Math.random() * pairs.length)];
-                    l = p.l; r = isSame ? p.r : 'CLOUD';
-                    isSame = (r === p.r);
-                } else if (rule === 'function') {
-                    const pairs = [
-                        {l: 'DRINK', r: 'WATER', same: true},
-                        {l: 'WRITE', r: 'PEN', same: true},
-                        {l: 'SLEEP', r: 'KNIFE', same: false},
-                        {l: 'CUT', r: 'SCISSORS', same: true}
-                    ];
-                    const p = pairs[Math.floor(Math.random() * pairs.length)];
-                    l = p.l; r = isSame ? p.r : 'SHOE';
-                    isSame = (r === p.r);
-                } else if (rule === 'color') {
-                    const pairs = [
-                        {l: 'SKY', r: 'BLUE', same: true},
-                        {l: 'GRASS', r: 'GREEN', same: true},
-                        {l: 'FIRE', r: 'YELLOW', same: false},
-                        {l: 'SNOW', r: 'WHITE', same: true}
-                    ];
-                    const p = pairs[Math.floor(Math.random() * pairs.length)];
-                    l = p.l; r = isSame ? p.r : 'PURPLE';
-                    isSame = (r === p.r);
-                }
-            }
-
-            if (Math.random() > 0.5 && rule !== 'physical' && rule !== 'meaning' && !useAffective) {
-                let temp = l; l = r; r = temp;
-            }
-
-            state.currentTrialData.left = l;
-            state.currentTrialData.right = r;
+            if (isSame) r = l; else while(r === l) r = Math.floor(Math.random() * 9) + 1;
+            
+            const words = ['', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
+            state.currentTrialData.left = l.toString();
+            state.currentTrialData.right = words[r];
             state.currentTrialData.isSame = isSame;
             state.currentTrialData.isInverted = state.settings.inversion && (Math.random() < 0.22);
-        }
-
-        function getNumWord(n, lang) {
-            if (lang === 'es') {
-                const words = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
-                return words[n] || 'UNO';
-            } else if (lang === 'zh') {
-                const words = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
-                return words[n] || '一';
-            } else {
-                const words = ['', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
-                return words[n] || 'ONE';
-            }
         }
 
         function triggerVisualFlash(isCorrect) {
             const overlay = document.getElementById('flash-overlay');
             const className = isCorrect ? 'flash-correct' : 'flash-wrong';
             overlay.classList.add(className);
-            setTimeout(() => {
-                overlay.classList.remove(className);
-            }, 300);
+            setTimeout(() => overlay.classList.remove(className), 300);
+        }
+
+        function handleLevelChange(direction) {
+            let idx = ALL_LEVELS.indexOf(state.level);
+            if (direction === 'up' && idx < ALL_LEVELS.length - 1) {
+                state.level = ALL_LEVELS[idx + 1];
+            } else if (direction === 'down' && idx > 0) {
+                state.level = ALL_LEVELS[idx - 1];
+            }
+            statLevel.textContent = state.level;
         }
 
         function handleUserChoice(userGuessedSame) {
             if (state.phase !== 'stimulus' || state.isPaused || state.inputLocked) return;
-            
             state.inputLocked = true;
             clearTimers();
 
             const timedOut = (userGuessedSame === null);
             let targetIsSame = state.currentTrialData.isSame;
-            if (state.currentTrialData.isInverted) {
-                targetIsSame = !targetIsSame;
-            }
-
+            if (state.currentTrialData.isInverted) targetIsSame = !targetIsSame;
             const correct = !timedOut && (userGuessedSame === targetIsSame);
 
             state.totalCount++;
 
             if (correct) {
                 state.correctCount++;
+                state.consecutiveCorrect++;
                 state.consecutiveErrors = 0;
-                playTone(true);
-                triggerVisualFlash(true);
+                playTone(true); triggerVisualFlash(true);
             } else {
                 state.consecutiveErrors++;
-                playTone(false);
-                triggerVisualFlash(false);
+                state.consecutiveCorrect = 0;
+                playTone(false); triggerVisualFlash(false);
             }
 
-            const accuracy = Math.round((state.correctCount / state.totalCount) * 100);
-            statAcc.textContent = `${accuracy}%`;
+            statAcc.textContent = `${Math.round((state.correctCount / state.totalCount) * 100)}%`;
 
-            if (state.settings.trainingMode === 'adaptive' && state.consecutiveErrors >= 3) {
-                let idx = ALL_LEVELS.indexOf(state.level);
-                if (idx > 0) {
-                    state.level = ALL_LEVELS[idx - 1];
+            // Active Level Progression Logic
+            if (state.settings.progressionMode === 'adaptive') {
+                if (state.consecutiveCorrect >= state.settings.adaptiveUpThreshold) {
+                    handleLevelChange('up');
+                    state.consecutiveCorrect = 0;
                 }
-                state.consecutiveErrors = 0;
-                statLevel.textContent = state.level;
+                if (state.consecutiveErrors >= state.settings.adaptiveDownThreshold) {
+                    handleLevelChange('down');
+                    state.consecutiveErrors = 0;
+                }
+            } else if (state.settings.progressionMode === 'normal') {
+                // Normal Mode Mid-Session Regression[cite: 1]
+                if (state.consecutiveErrors >= 3) {
+                    handleLevelChange('down');
+                    state.consecutiveErrors = 0;
+                }
             }
 
-            setTimeout(() => {
-                nextTrial();
-            }, 550);
+            setTimeout(() => nextTrial(), 550);
         }
 
         sameBtn.addEventListener('click', () => handleUserChoice(true));
@@ -1466,18 +1224,23 @@
         readyBtn.addEventListener('click', advanceToStimulus);
 
         function endSession() {
+            clearTimers();
+            clearInterval(state.globalTimerInterval);
             state.phase = 'dashboard';
             btnPause.classList.add('hidden');
             trainingContainer.classList.add('hidden');
+            pauseScreen.classList.add('hidden');
 
             const errors = state.totalCount - state.correctCount;
             let levelMessage = `Current Level: <strong>${state.level}</strong>`;
 
-            if (state.settings.trainingMode === 'adaptive') {
-                if (errors <= 3) {
-                    let idx = ALL_LEVELS.indexOf(state.level);
-                    if (idx !== -1 && idx < ALL_LEVELS.length - 1) {
-                        state.level = ALL_LEVELS[idx + 1];
+            // Normal Mode End-of-Session Ascension[cite: 1]
+            if (state.settings.progressionMode === 'normal') {
+                const acc = state.totalCount > 0 ? (state.correctCount / state.totalCount) : 0;
+                if (acc >= 0.91) {
+                    let oldLevel = state.level;
+                    handleLevelChange('up');
+                    if (state.level > oldLevel) {
                         levelMessage = `Current Level: <strong>${state.level}</strong> <span style="color:var(--success); font-weight:bold;">(Level Up!)</span>`;
                     }
                 }
@@ -1488,17 +1251,12 @@
             state.lifetimeStats.totalSessions++;
             state.lifetimeStats.totalTrials += state.totalCount;
             state.lifetimeStats.totalCorrect += state.correctCount;
-
             const today = getTodayKey();
-            if (!state.lifetimeStats.dailyLogs) {
-                state.lifetimeStats.dailyLogs = {};
-            }
             state.lifetimeStats.dailyLogs[today] = (state.lifetimeStats.dailyLogs[today] || 0) + 1;
-            
             saveStorage();
 
             const finalAcc = state.totalCount > 0 ? Math.round((state.correctCount / state.totalCount) * 100) : 0;
-            summaryStatsText.innerHTML = `Session complete!<br><br>Accuracy: <strong>${finalAcc}%</strong> (${errors} errors)<br>${levelMessage}<br>Max Level Reached: <strong>${state.maxLevelReached}</strong>`;
+            summaryStatsText.innerHTML = `Session complete!<br><br>Accuracy: <strong>${finalAcc}%</strong> (${errors} errors across ${state.totalCount} trials)<br>${levelMessage}<br>Max Level Reached: <strong>${state.maxLevelReached}</strong>`;
             summaryModal.classList.remove('hidden');
         }
 
