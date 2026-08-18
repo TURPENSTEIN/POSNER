@@ -34,6 +34,22 @@
             flex-direction: column;
             overflow-x: hidden;
         }
+        
+        .top-banner {
+            background-color: var(--accent);
+            color: #0f172a;
+            text-align: center;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+        
+        .top-banner a {
+            color: #0f172a;
+            text-decoration: underline;
+            margin-left: 0.5rem;
+        }
 
         #flash-overlay {
             position: fixed;
@@ -193,12 +209,6 @@
             box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
         }
 
-        .stimulus-box.affective-distractor {
-            border-color: #f43f5e;
-            color: #f43f5e;
-            background-color: rgba(244, 63, 94, 0.08);
-        }
-
         .action-buttons {
             display: flex;
             gap: 1rem;
@@ -349,7 +359,7 @@
         }
 
         .setting-inline-group input[type="number"] {
-            width: 60px;
+            width: 80px;
             background: var(--surface-color);
             color: var(--text-main);
             border: 1px solid var(--border);
@@ -451,19 +461,16 @@
             width: 100%;
         }
 
-        textarea {
-            resize: vertical;
-            min-height: 80px;
-            font-family: monospace;
-            font-size: 0.85rem;
-        }
-
         .hidden {
             display: none !important;
         }
     </style>
 </head>
 <body>
+
+    <div class="top-banner">
+        Join the MINDBUILDING community: <a href="https://discord.gg/brain" target="_blank">discord.gg/brain</a>
+    </div>
 
     <div id="flash-overlay"></div>
 
@@ -558,15 +565,20 @@
             <button id="btn-close-settings">Close</button>
         </div>
         <div class="panel-content">
-            <!-- Pacing & Length Mode -->
+            
             <div class="setting-card">
-                <label>Session Length</label>
-                <select id="setting-session-length">
-                    <option value="32">32 Trials (Fixed Length)</option>
-                    <option value="300">5 Minutes Continuous</option>
-                    <option value="600">10 Minutes Continuous</option>
-                    <option value="900">15 Minutes Continuous</option>
+                <label>Session Duration Mode</label>
+                <select id="setting-session-mode">
+                    <option value="trials">Fixed Trials (32)</option>
+                    <option value="time">Continuous Time</option>
                 </select>
+                
+                <div id="time-input-controls" class="hidden" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                    <div class="setting-inline-group" style="justify-content: space-between;">
+                        <span>Duration (Minutes):</span>
+                        <input type="number" id="setting-session-minutes" min="1" max="120" value="15">
+                    </div>
+                </div>
             </div>
 
             <div class="setting-card">
@@ -594,15 +606,11 @@
                 <label>Task Modes</label>
                 <div class="checkbox-row" style="margin-top: 0.5rem;">
                     <input type="checkbox" id="setting-classic-mode" checked>
-                    <span>Classic Mode (Numbers & Physical format)</span>
+                    <span>Classic Mode (Includes Physical Rule Match)</span>
                 </div>
                 <div class="checkbox-row" style="margin-top: 0.5rem;">
                     <input type="checkbox" id="setting-multi-mode" checked>
-                    <span>Multi Mode (Synonyms, Categories, Functions, Colors)</span>
-                </div>
-                <div class="checkbox-row" style="margin-top: 0.5rem;">
-                    <input type="checkbox" id="setting-affective-mode">
-                    <span>Affective Mode (Emotional interference & valence)</span>
+                    <span>Multi Mode (Includes Category Rule Match)</span>
                 </div>
             </div>
 
@@ -673,18 +681,16 @@
                 dailyLogs: {} 
             },
             settings: {
-                sessionLength: '32',
+                sessionMode: 'trials',
+                sessionMinutes: 15,
                 progressionMode: 'normal',
                 adaptiveUpThreshold: 5,
                 adaptiveDownThreshold: 3,
                 classicMode: true,
                 multiMode: true,
-                affectiveMode: false,
                 ufoiv: false,
                 inversion: false,
                 soundEnabled: true,
-                language: 'en',
-                customPairsJson: '',
                 autoAdvanceDelay: 1.25,
                 fixedLevel: 1,
                 sameKey: 'KeyS',
@@ -693,7 +699,7 @@
                 diffKeyLabel: 'D'
             },
             currentTrialData: {
-                rule: '', left: '', right: '', isSame: false, isInverted: false, isAffective: false
+                rule: '', left: '', right: '', isSame: false, isInverted: false
             },
             listeningForBinding: null
         };
@@ -756,7 +762,10 @@
         const bindSameBtn = document.getElementById('bind-same');
         const bindDiffBtn = document.getElementById('bind-diff');
         
-        const settingSessionLength = document.getElementById('setting-session-length');
+        const settingSessionMode = document.getElementById('setting-session-mode');
+        const settingSessionMinutes = document.getElementById('setting-session-minutes');
+        const timeInputControls = document.getElementById('time-input-controls');
+        
         const settingProgressionMode = document.getElementById('setting-progression-mode');
         const adaptiveControls = document.getElementById('adaptive-controls');
         const settingAdaptiveUp = document.getElementById('setting-adaptive-up');
@@ -764,7 +773,6 @@
 
         const settingClassicMode = document.getElementById('setting-classic-mode');
         const settingMultiMode = document.getElementById('setting-multi-mode');
-        const settingAffectiveMode = document.getElementById('setting-affective-mode');
         const settingUfoiv = document.getElementById('setting-ufoiv');
         const settingInversion = document.getElementById('setting-inversion');
         const settingSound = document.getElementById('setting-sound');
@@ -811,41 +819,50 @@
                 adaptiveControls.classList.add('hidden');
             }
         }
+        
+        function toggleTimeControls() {
+            if (state.settings.sessionMode === 'time') {
+                timeInputControls.classList.remove('hidden');
+            } else {
+                timeInputControls.classList.add('hidden');
+            }
+        }
 
         function loadStorage() {
-            const saved = localStorage.getItem('sem_ltmr_settings_v2');
+            const saved = localStorage.getItem('sem_ltmr_settings_v3');
             if (saved) {
                 const parsed = JSON.parse(saved);
                 state.settings = { ...state.settings, ...parsed };
                 updateKeybindLabels();
-                settingSessionLength.value = state.settings.sessionLength;
+                settingSessionMode.value = state.settings.sessionMode || 'trials';
+                settingSessionMinutes.value = state.settings.sessionMinutes || 15;
                 settingProgressionMode.value = state.settings.progressionMode;
                 settingAdaptiveUp.value = state.settings.adaptiveUpThreshold;
                 settingAdaptiveDown.value = state.settings.adaptiveDownThreshold;
                 settingClassicMode.checked = state.settings.classicMode;
                 settingMultiMode.checked = state.settings.multiMode;
-                settingAffectiveMode.checked = !!state.settings.affectiveMode;
                 settingUfoiv.checked = state.settings.ufoiv;
                 settingInversion.checked = state.settings.inversion;
                 settingSound.checked = state.settings.soundEnabled;
             }
-            const savedStats = localStorage.getItem('sem_ltmr_stats');
+            const savedStats = localStorage.getItem('sem_ltmr_stats_v3');
             if (savedStats) state.lifetimeStats = JSON.parse(savedStats);
-            const savedMax = localStorage.getItem('sem_ltmr_maxlevel');
+            const savedMax = localStorage.getItem('sem_ltmr_maxlevel_v3');
             if (savedMax) state.maxLevelReached = parseFloat(savedMax) || 1;
 
             if (state.settings.progressionMode === 'manual') state.level = state.settings.fixedLevel || 1;
             
             toggleAdaptiveControls();
+            toggleTimeControls();
             statLevel.textContent = state.level;
             updateDashboardDisplay();
             buildLevelGrid();
         }
 
         function saveStorage() {
-            localStorage.setItem('sem_ltmr_settings_v2', JSON.stringify(state.settings));
-            localStorage.setItem('sem_ltmr_stats', JSON.stringify(state.lifetimeStats));
-            localStorage.setItem('sem_ltmr_maxlevel', state.maxLevelReached.toString());
+            localStorage.setItem('sem_ltmr_settings_v3', JSON.stringify(state.settings));
+            localStorage.setItem('sem_ltmr_stats_v3', JSON.stringify(state.lifetimeStats));
+            localStorage.setItem('sem_ltmr_maxlevel_v3', state.maxLevelReached.toString());
         }
 
         function updateDashboardDisplay() {
@@ -969,7 +986,17 @@
         navLogo.addEventListener('click', showDashboard);
         btnDashboard.addEventListener('click', showDashboard);
 
-        settingSessionLength.addEventListener('change', (e) => { state.settings.sessionLength = e.target.value; saveStorage(); });
+        settingSessionMode.addEventListener('change', (e) => { 
+            state.settings.sessionMode = e.target.value; 
+            toggleTimeControls();
+            saveStorage(); 
+        });
+        
+        settingSessionMinutes.addEventListener('input', (e) => { 
+            state.settings.sessionMinutes = parseInt(e.target.value) || 15; 
+            saveStorage(); 
+        });
+
         settingProgressionMode.addEventListener('change', (e) => { 
             state.settings.progressionMode = e.target.value; 
             toggleAdaptiveControls();
@@ -978,12 +1005,12 @@
             saveStorage(); 
             buildLevelGrid();
         });
+        
         settingAdaptiveUp.addEventListener('input', (e) => { state.settings.adaptiveUpThreshold = parseInt(e.target.value) || 5; saveStorage(); });
         settingAdaptiveDown.addEventListener('input', (e) => { state.settings.adaptiveDownThreshold = parseInt(e.target.value) || 3; saveStorage(); });
 
         settingClassicMode.addEventListener('change', (e) => { state.settings.classicMode = e.target.checked; saveStorage(); });
         settingMultiMode.addEventListener('change', (e) => { state.settings.multiMode = e.target.checked; saveStorage(); });
-        settingAffectiveMode.addEventListener('change', (e) => { state.settings.affectiveMode = e.target.checked; saveStorage(); });
         settingUfoiv.addEventListener('change', (e) => { state.settings.ufoiv = e.target.checked; saveStorage(); });
         settingInversion.addEventListener('change', (e) => { state.settings.inversion = e.target.checked; saveStorage(); });
 
@@ -1036,14 +1063,14 @@
             welcomeScreen.classList.add('hidden');
             btnPause.classList.remove('hidden'); 
 
-            if (state.settings.sessionLength !== '32') {
+            if (state.settings.sessionMode === 'time') {
                 timerContainer.classList.remove('hidden');
-                timerContainer.textContent = formatTime(parseInt(state.settings.sessionLength));
+                const timeLimitSeconds = state.settings.sessionMinutes * 60;
+                timerContainer.textContent = formatTime(timeLimitSeconds);
                 state.globalTimerInterval = setInterval(() => {
                     if (!state.isPaused) {
                         state.timeElapsedSeconds++;
-                        const limit = parseInt(state.settings.sessionLength);
-                        const remaining = limit - state.timeElapsedSeconds;
+                        const remaining = timeLimitSeconds - state.timeElapsedSeconds;
                         timerContainer.textContent = formatTime(remaining);
                         
                         if (remaining <= 0) {
@@ -1066,13 +1093,13 @@
 
         function nextTrial() {
             clearTimers();
-            if (state.settings.sessionLength === '32' && state.currentTrialIndex >= 32) {
+            if (state.settings.sessionMode === 'trials' && state.currentTrialIndex >= 32) {
                 endSession();
                 return;
             }
 
             state.currentTrialIndex++;
-            const maxT = state.settings.sessionLength === '32' ? "/32" : "";
+            const maxT = state.settings.sessionMode === 'trials' ? "/32" : "";
             statTrial.textContent = `${state.currentTrialIndex}${maxT}`;
             ruleTrialCounter.textContent = `Trial ${state.currentTrialIndex}${maxT}`;
             gameTrialCounter.textContent = `Trial ${state.currentTrialIndex}${maxT}`;
@@ -1143,17 +1170,57 @@
         }
 
         function generateTrialContent() {
-            state.currentTrialData.rule = 'meaning';
-            let l = Math.floor(Math.random() * 9) + 1;
-            let r = Math.floor(Math.random() * 9) + 1;
-            let isSame = Math.random() > 0.5;
-            if (isSame) r = l; else while(r === l) r = Math.floor(Math.random() * 9) + 1;
+            const rules = ['meaning'];
+            if (state.settings.classicMode) rules.push('physical');
+            if (state.settings.multiMode) rules.push('category');
             
-            const words = ['', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
-            state.currentTrialData.left = l.toString();
-            state.currentTrialData.right = words[r];
+            // Fallback
+            if (rules.length === 0) rules.push('meaning');
+
+            const selectedRule = rules[Math.floor(Math.random() * rules.length)];
+            state.currentTrialData.rule = selectedRule;
+            
+            let isSame = Math.random() > 0.5;
             state.currentTrialData.isSame = isSame;
             state.currentTrialData.isInverted = state.settings.inversion && (Math.random() < 0.22);
+
+            if (selectedRule === 'meaning') {
+                const words = ['ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
+                const romans = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
+                let lIdx = Math.floor(Math.random() * 9);
+                let rIdx = isSame ? lIdx : (lIdx + Math.floor(Math.random() * 8) + 1) % 9;
+                
+                state.currentTrialData.left = (lIdx + 1).toString();
+                state.currentTrialData.right = Math.random() > 0.5 ? words[rIdx] : romans[rIdx];
+                
+            } else if (selectedRule === 'physical') {
+                const letters = ['A', 'B', 'D', 'E', 'G', 'H', 'M', 'N', 'Q', 'R'];
+                let l = letters[Math.floor(Math.random() * letters.length)];
+                let r = isSame ? l : letters[(letters.indexOf(l) + 1) % letters.length];
+                
+                state.currentTrialData.left = l;
+                state.currentTrialData.right = Math.random() > 0.5 ? r.toLowerCase() : r;
+                
+            } else if (selectedRule === 'category') {
+                const categories = {
+                    'fruit': ['APPLE', 'BANANA', 'CHERRY', 'GRAPE', 'MANGO'],
+                    'animal': ['DOG', 'TIGER', 'EAGLE', 'SHARK', 'BEAR'],
+                    'tool': ['HAMMER', 'WRENCH', 'SAW', 'DRILL', 'PLIERS']
+                };
+                const keys = Object.keys(categories);
+                let lCat = keys[Math.floor(Math.random() * keys.length)];
+                let rCat = isSame ? lCat : keys[(keys.indexOf(lCat) + 1) % keys.length];
+                
+                let lWord = categories[lCat][Math.floor(Math.random() * categories[lCat].length)];
+                let rWord = categories[rCat][Math.floor(Math.random() * categories[rCat].length)];
+                
+                while(isSame && lWord === rWord) {
+                    rWord = categories[rCat][Math.floor(Math.random() * categories[rCat].length)];
+                }
+                
+                state.currentTrialData.left = lWord;
+                state.currentTrialData.right = rWord;
+            }
         }
 
         function triggerVisualFlash(isCorrect) {
@@ -1198,7 +1265,6 @@
 
             statAcc.textContent = `${Math.round((state.correctCount / state.totalCount) * 100)}%`;
 
-            // Active Level Progression Logic
             if (state.settings.progressionMode === 'adaptive') {
                 if (state.consecutiveCorrect >= state.settings.adaptiveUpThreshold) {
                     handleLevelChange('up');
@@ -1209,7 +1275,6 @@
                     state.consecutiveErrors = 0;
                 }
             } else if (state.settings.progressionMode === 'normal') {
-                // Normal Mode Mid-Session Regression[cite: 1]
                 if (state.consecutiveErrors >= 3) {
                     handleLevelChange('down');
                     state.consecutiveErrors = 0;
@@ -1234,7 +1299,6 @@
             const errors = state.totalCount - state.correctCount;
             let levelMessage = `Current Level: <strong>${state.level}</strong>`;
 
-            // Normal Mode End-of-Session Ascension[cite: 1]
             if (state.settings.progressionMode === 'normal') {
                 const acc = state.totalCount > 0 ? (state.correctCount / state.totalCount) : 0;
                 if (acc >= 0.91) {
