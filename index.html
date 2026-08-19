@@ -1202,10 +1202,14 @@
                 state.currentTrialData.right = Math.random() > 0.5 ? r.toLowerCase() : r;
                 
             } else if (selectedRule === 'category') {
+                // MULTI MODE EXPANSION
                 const categories = {
-                    'fruit': ['APPLE', 'BANANA', 'CHERRY', 'GRAPE', 'MANGO'],
-                    'animal': ['DOG', 'TIGER', 'EAGLE', 'SHARK', 'BEAR'],
-                    'tool': ['HAMMER', 'WRENCH', 'SAW', 'DRILL', 'PLIERS']
+                    'fruit': ['APPLE', 'BANANA', 'CHERRY', 'GRAPE', 'MANGO', 'ORANGE', 'PEACH'],
+                    'animal': ['DOG', 'TIGER', 'EAGLE', 'SHARK', 'BEAR', 'LION', 'ZEBRA'],
+                    'tool': ['HAMMER', 'WRENCH', 'SAW', 'DRILL', 'PLIERS', 'CHISEL', 'ANVIL'],
+                    'vehicle': ['CAR', 'TRUCK', 'TRAIN', 'PLANE', 'BOAT', 'BICYCLE', 'BUS'],
+                    'furniture': ['CHAIR', 'TABLE', 'DESK', 'BED', 'SOFA', 'CABINET', 'STOOL'],
+                    'clothing': ['SHIRT', 'PANTS', 'JACKET', 'SHOES', 'HAT', 'SOCKS', 'GLOVES']
                 };
                 const keys = Object.keys(categories);
                 let lCat = keys[Math.floor(Math.random() * keys.length)];
