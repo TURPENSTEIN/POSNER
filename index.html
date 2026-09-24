@@ -3,20 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Semantic LTMR - Posner Mixed Task</title>
+    <title>Semantic LTMR — MINDBUILDING</title>
     <style>
         :root {
-            --bg-color: #0f172a;
-            --surface-color: #1e293b;
-            --surface-hover: #334155;
+            --bg-color: #09090b;
+            --surface-color: #121215;
+            --surface-hover: #1c1c21;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --accent: #38bdf8;
-            --accent-hover: #0ea5e9;
+            --accent: #c02626;
+            --accent-hover: #dc2626;
+            --accent-glow: rgba(192, 38, 38, 0.3);
+            --accent-border: rgba(192, 38, 38, 0.4);
             --danger: #ef4444;
             --success: #22c55e;
-            --border: #334155;
+            --border: #27272a;
             --warning: #f59e0b;
+            --card-bg: #16161a;
         }
 
         * {
@@ -36,19 +39,23 @@
         }
         
         .top-banner {
-            background-color: var(--accent);
-            color: #0f172a;
+            background: linear-gradient(90deg, #801414 0%, var(--accent) 50%, #801414 100%);
+            color: #ffffff;
             text-align: center;
-            padding: 0.5rem 1rem;
-            font-size: 0.9rem;
+            padding: 0.4rem 1rem;
+            font-size: 0.85rem;
             font-weight: 700;
             letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
-        
+
         .top-banner a {
-            color: #0f172a;
+            color: #ffffff;
             text-decoration: underline;
-            margin-left: 0.5rem;
+            font-weight: 800;
         }
 
         #flash-overlay {
@@ -64,13 +71,13 @@
         }
 
         #flash-overlay.flash-correct {
-            background-color: rgba(34, 197, 94, 0.35);
+            background-color: rgba(34, 197, 94, 0.25);
             opacity: 1;
             transition: none; 
         }
 
         #flash-overlay.flash-wrong {
-            background-color: rgba(239, 68, 68, 0.4);
+            background-color: rgba(239, 68, 68, 0.35);
             opacity: 1;
             transition: none;
         }
@@ -79,70 +86,113 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem 2rem;
+            padding: 0.85rem 2rem;
             background-color: var(--surface-color);
             border-bottom: 1px solid var(--border);
         }
 
-        .logo {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--accent);
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
             cursor: pointer;
+        }
+
+        .brand-logo-img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .logo-text {
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            color: var(--text-main);
+            text-transform: uppercase;
         }
 
         .stats-bar {
             display: flex;
-            gap: 1.5rem;
-            font-size: 0.9rem;
+            gap: 1.25rem;
+            font-size: 0.88rem;
             color: var(--text-muted);
             align-items: center;
         }
 
+        .stat-item {
+            background: var(--bg-color);
+            padding: 0.35rem 0.75rem;
+            border-radius: 9999px;
+            border: 1px solid var(--border);
+        }
+
         .stat-item span {
             color: var(--text-main);
-            font-weight: 600;
+            font-weight: 700;
         }
         
         .timer-display {
-            background-color: rgba(56, 189, 248, 0.1);
-            color: var(--accent);
-            padding: 0.25rem 0.75rem;
-            border-radius: 0.375rem;
+            background-color: rgba(192, 38, 38, 0.15);
+            color: #f87171;
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
             font-family: monospace;
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             font-weight: 700;
-            border: 1px solid rgba(56, 189, 248, 0.3);
+            border: 1px solid var(--accent-border);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
         }
 
         .nav-buttons {
             display: flex;
-            gap: 0.75rem;
+            gap: 0.6rem;
         }
 
         button {
             background-color: var(--surface-hover);
             color: var(--text-main);
             border: 1px solid var(--border);
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
+            padding: 0.5rem 1.1rem;
+            border-radius: 9999px;
             cursor: pointer;
-            font-weight: 500;
-            transition: background-color 0.2s, border-color 0.2s;
+            font-weight: 600;
+            font-size: 0.88rem;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
         }
 
         button:hover {
             background-color: var(--border);
+            border-color: #3f3f46;
         }
 
         button.primary {
             background-color: var(--accent);
-            color: #0f172a;
+            color: #ffffff;
             border: none;
+            box-shadow: 0 4px 14px var(--accent-glow);
         }
 
         button.primary:hover {
             background-color: var(--accent-hover);
+            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+        }
+
+        button.discord-btn {
+            background-color: #7289da;
+            color: #ffffff;
+            border: none;
+        }
+
+        button.discord-btn:hover {
+            background-color: #5b73c7;
         }
 
         main {
@@ -158,26 +208,36 @@
         .stage {
             background-color: var(--surface-color);
             border: 1px solid var(--border);
-            border-radius: 1rem;
+            border-radius: 1.25rem;
             width: 100%;
-            max-width: 750px;
-            min-height: 480px;
+            max-width: 820px;
+            min-height: 520px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 2rem;
+            padding: 2.5rem;
             position: relative;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Adjusted Logo Styling for the Dashboard */
+        .logo {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
         }
 
         .cue-text {
-            font-size: 1.25rem;
-            color: var(--accent);
-            margin-bottom: 2.5rem;
+            font-size: 1.35rem;
+            color: #f87171;
+            margin-bottom: 2rem;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 600;
+            letter-spacing: 0.08em;
+            font-weight: 800;
         }
 
         .stimulus-container {
@@ -187,40 +247,42 @@
             position: relative;
             width: 100%;
             justify-content: center;
-            min-height: 120px;
+            min-height: 130px;
             align-items: center;
         }
 
         .stimulus-box {
             font-size: 2.2rem;
-            font-weight: 700;
+            font-weight: 800;
             background: var(--bg-color);
-            padding: 1.25rem 2rem;
-            border-radius: 0.75rem;
+            padding: 1.25rem 2.2rem;
+            border-radius: 0.85rem;
             border: 1px solid var(--border);
-            min-width: 140px;
+            min-width: 160px;
             text-align: center;
-            transition: transform 0.1s;
+            transition: transform 0.1s, border-color 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
 
         .stimulus-box.inverted-rule {
             border-color: var(--danger);
             color: var(--danger);
-            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.35);
         }
 
         .action-buttons {
             display: flex;
-            gap: 1rem;
+            gap: 1.25rem;
             width: 100%;
-            max-width: 400px;
+            max-width: 440px;
         }
 
         .action-buttons button {
             flex: 1;
-            padding: 1rem;
-            font-size: 1rem;
-            font-weight: 600;
+            padding: 1.1rem;
+            font-size: 1.05rem;
+            font-weight: 700;
+            border-radius: 0.75rem;
         }
 
         .screen {
@@ -233,43 +295,106 @@
         }
 
         .screen h1 {
-            font-size: 1.75rem;
+            font-size: 2.2rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
         }
 
         .screen p {
             color: var(--text-muted);
-            line-height: 1.5;
-            font-size: 0.95rem;
-            max-width: 520px;
+            line-height: 1.6;
+            font-size: 0.98rem;
+            max-width: 580px;
         }
 
         .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.85rem;
             width: 100%;
-            margin: 1rem 0;
+            margin: 1rem 0 0.5rem 0;
         }
 
         .dash-card {
-            background: var(--bg-color);
+            background: var(--card-bg);
             border: 1px solid var(--border);
-            padding: 1.25rem;
-            border-radius: 0.75rem;
+            padding: 1.1rem;
+            border-radius: 0.85rem;
             text-align: left;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
         .dash-card h3 {
-            font-size: 0.85rem;
+            font-size: 0.78rem;
             color: var(--text-muted);
             text-transform: uppercase;
-            margin-bottom: 0.5rem;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.4rem;
         }
 
         .dash-card .stat-val {
-            font-size: 1.75rem;
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: #f87171;
+        }
+
+        /* History Section */
+        .history-section {
+            width: 100%;
+            margin-top: 0.75rem;
+            text-align: left;
+        }
+
+        .history-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.6rem;
+        }
+
+        .history-title-row h3 {
+            font-size: 0.95rem;
             font-weight: 700;
-            color: var(--accent);
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .history-table-wrapper {
+            max-height: 160px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 0.6rem;
+            background: var(--bg-color);
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.83rem;
+        }
+
+        .history-table th {
+            background: var(--surface-hover);
+            color: var(--text-muted);
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        .history-table td {
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-main);
+        }
+
+        .history-table tr:last-child td {
+            border-bottom: none;
         }
 
         .modal-overlay {
@@ -278,38 +403,38 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.82);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 200;
+            backdrop-filter: blur(4px);
         }
 
         .modal-content {
             background: var(--surface-color);
             border: 1px solid var(--border);
             padding: 2.5rem;
-            border-radius: 1rem;
+            border-radius: 1.25rem;
             text-align: center;
-            max-width: 450px;
+            max-width: 480px;
             width: 90%;
             display: flex;
             flex-direction: column;
             gap: 1.25rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-            cursor: pointer;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7);
         }
 
         .overlay-panel {
             position: fixed;
             top: 0;
-            right: -480px;
-            width: 480px;
+            right: -520px;
+            width: 520px;
             height: 100%;
             background-color: var(--surface-color);
             border-left: 1px solid var(--border);
-            box-shadow: -5px 0 25px rgba(0,0,0,0.5);
-            transition: right 0.3s ease;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.7);
+            transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             z-index: 100;
             display: flex;
             flex-direction: column;
@@ -339,17 +464,19 @@
         .setting-card {
             background: var(--bg-color);
             border: 1px solid var(--border);
-            border-radius: 0.5rem;
-            padding: 1rem;
+            border-radius: 0.75rem;
+            padding: 1.1rem;
             display: flex;
             flex-direction: column;
             gap: 0.75rem;
         }
 
         .setting-card label {
-            font-size: 0.875rem;
+            font-size: 0.85rem;
             color: var(--text-muted);
-            font-weight: 500;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
         }
         
         .setting-inline-group {
@@ -363,9 +490,10 @@
             background: var(--surface-color);
             color: var(--text-main);
             border: 1px solid var(--border);
-            padding: 0.375rem;
-            border-radius: 0.375rem;
+            padding: 0.4rem;
+            border-radius: 0.4rem;
             text-align: center;
+            font-weight: 700;
         }
 
         .checkbox-row {
@@ -373,7 +501,7 @@
             align-items: center;
             gap: 0.75rem;
             cursor: pointer;
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             font-weight: 500;
         }
 
@@ -395,9 +523,9 @@
             background: var(--surface-color);
             border: 1px solid var(--border);
             padding: 0.5rem;
-            border-radius: 0.375rem;
+            border-radius: 0.5rem;
             color: var(--text-main);
-            font-weight: 600;
+            font-weight: 700;
             font-size: 0.85rem;
             cursor: pointer;
             text-align: center;
@@ -406,8 +534,9 @@
 
         .level-btn.active {
             background: var(--accent);
-            color: #0f172a;
+            color: #ffffff;
             border-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
         }
 
         .keybind-row {
@@ -424,17 +553,17 @@
             background: var(--surface-hover);
             border: 1px solid var(--border);
             padding: 0.375rem 0.75rem;
-            border-radius: 0.25rem;
-            color: var(--accent);
-            font-weight: 600;
+            border-radius: 0.4rem;
+            color: #f87171;
+            font-weight: 700;
             cursor: pointer;
-            min-width: 60px;
+            min-width: 65px;
             text-align: center;
         }
 
         .key-capture-btn.listening {
             background: var(--accent);
-            color: #0f172a;
+            color: #ffffff;
             animation: pulse 1.5s infinite;
         }
 
@@ -449,16 +578,38 @@
             color: var(--text-muted);
             margin-bottom: 0.5rem;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.12em;
+            font-weight: 700;
         }
 
         select, textarea {
             background: var(--surface-color);
             color: var(--text-main);
             border: 1px solid var(--border);
-            padding: 0.5rem;
-            border-radius: 0.375rem;
+            padding: 0.55rem;
+            border-radius: 0.5rem;
             width: 100%;
+            font-weight: 600;
+        }
+
+        .footer-subtext {
+            margin-top: 1.5rem;
+            font-size: 0.75rem;
+            color: #52525b;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        /* Subtle, minimalist footer */
+        .credit {
+            font-size: 0.75rem;
+            color: #555555; 
+            font-weight: 300; 
+            letter-spacing: 0.05em;
+            padding: 1.5rem;
+            margin-top: auto;
+            text-align: center;
+            text-transform: uppercase;
         }
 
         .hidden {
@@ -469,32 +620,57 @@
 <body>
 
     <div class="top-banner">
-        Join the MINDBUILDING community: <a href="https://discord.gg/brain" target="_blank">discord.gg/brain</a>
+        <span>JOIN THE MINDBUILDING COMMUNITY:</span>
+        <a href="https://discord.gg/brain" target="_blank">discord.gg/brain</a>
     </div>
 
     <div id="flash-overlay"></div>
 
     <header>
-        <div class="logo" id="nav-logo">Semantic LTMR</div>
+        <div class="brand-container" id="nav-logo">
+            <img src="mb_3.png" alt="Mindbuilding Logo" class="brand-logo-img">
+            <div class="logo-text">MINDBUILDING</div>
+        </div>
+
         <div class="stats-bar">
-            <div id="timer-container" class="timer-display hidden">00:00</div>
+            <div id="timer-container" class="timer-display hidden">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span id="timer-text">00:00</span>
+            </div>
             <div class="stat-item">Today: <span id="stat-daily-sessions">0</span></div>
             <div class="stat-item">Level: <span id="stat-level">1</span></div>
             <div class="stat-item">Accuracy: <span id="stat-acc">100%</span></div>
             <div class="stat-item">Trial: <span id="stat-trial">0</span></div>
         </div>
+
         <div class="nav-buttons">
             <button id="btn-pause" class="hidden">Pause</button>
-            <button id="btn-dashboard">Dashboard</button>
-            <button id="btn-settings">Settings</button>
+            <button id="btn-dashboard">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                Dashboard
+            </button>
+            <a href="https://discord.gg/brain" target="_blank" style="text-decoration:none;">
+                <button type="button" class="discord-btn">Discord</button>
+            </a>
+            <button id="btn-settings">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Settings
+            </button>
         </div>
     </header>
 
     <main>
         <div class="stage" id="game-stage">
+            
+            <!-- Dashboard Screen -->
             <div class="screen" id="dashboard-screen">
-                <h1>Semantic Long-Term Memory & Attention Switching</h1>
-                <p>Train rapid semantic lookup, inhibition control, and peripheral vigilance without sub-vocalization crutches.</p>
+                
+                <!-- Updated Brand Logo -->
+                <img src="mb_3.png" alt="Mindbuilding Logo" class="logo">
+                
+                <h1>SEMANTIC LTMR</h1>
+                <p>Train rapid semantic lookup, inhibition control, and peripheral vigilance. Includes Cross Sum, Modulo, Part-Whole, and Semantic relations.</p>
+                
                 <div class="dashboard-grid">
                     <div class="dash-card">
                         <h3>Today's Sessions</h3>
@@ -505,37 +681,69 @@
                         <div class="stat-val" id="dash-sessions">0</div>
                     </div>
                     <div class="dash-card">
-                        <h3>Lifetime Accuracy</h3>
+                        <h3>Lifetime Acc</h3>
                         <div class="stat-val" id="dash-accuracy">0%</div>
                     </div>
                     <div class="dash-card">
-                        <h3>Max Level Achieved</h3>
-                        <div class="dash-card-val"><div class="stat-val" id="dash-level">1</div></div>
+                        <h3>Max Level Peak</h3>
+                        <div class="stat-val" id="dash-level">1</div>
                     </div>
                 </div>
-                <button class="primary" id="btn-start-from-dash" style="padding: 0.75rem 2rem; font-size: 1rem;">Start Session (Press Spacebar)</button>
+
+                <div class="history-section">
+                    <div class="history-title-row">
+                        <h3>Session History</h3>
+                        <button id="btn-clear-history" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;">Clear Logs</button>
+                    </div>
+                    <div class="history-table-wrapper">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Mode</th>
+                                    <th>Trials</th>
+                                    <th>Accuracy</th>
+                                    <th>Peak Level</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body">
+                                <tr><td colspan="5" style="text-align:center; color: var(--text-muted);">No sessions logged yet.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <button class="primary" id="btn-start-from-dash" style="padding: 0.85rem 2.5rem; font-size: 1.05rem; margin-top: 0.5rem;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Start Training (Spacebar)
+                </button>
+                <div class="footer-subtext">ENGINEERED FOR COGNITIVE PERFORMANCE</div>
             </div>
 
+            <!-- Welcome Screen -->
             <div class="screen hidden" id="welcome-screen">
                 <h1>Posner Mixed Task</h1>
                 <p>Rapidly judge stimulus relations according to the active rule. Pacing is continuous to force instant retrieval intuition. Misses or wrong answers incur a red error flash.</p>
-                <button class="primary" id="btn-start" style="padding: 0.75rem 2rem; font-size: 1rem;">Start Session (Press Space)</button>
+                <button class="primary" id="btn-start" style="padding: 0.85rem 2.5rem; font-size: 1.05rem; margin-top: 1rem;">Start Session (Press Space)</button>
             </div>
 
+            <!-- Pause Screen -->
             <div class="screen hidden" id="pause-screen">
                 <h1>Session Paused</h1>
                 <p>Take a breath. Ready to jump back into the flow?</p>
-                <button class="primary" id="btn-resume" style="padding: 0.75rem 2rem; font-size: 1rem;">Resume Session (Press P / Esc)</button>
-                <button style="margin-top: 1rem;" id="btn-abort-session">End Session Now</button>
+                <button class="primary" id="btn-resume" style="padding: 0.85rem 2.5rem; font-size: 1.05rem;">Resume Session (P / Esc)</button>
+                <button style="margin-top: 0.5rem;" id="btn-abort-session">End Session Now</button>
             </div>
 
+            <!-- Rule Screen -->
             <div class="screen hidden" id="rule-screen">
                 <div class="trial-counter" id="rule-trial-counter">Trial 1</div>
-                <div class="cue-text" id="rule-cue-box" style="font-size: 1.75rem;">Rule: MEANING</div>
+                <div class="cue-text" id="rule-cue-box" style="font-size: 1.85rem;">Rule: MEANING</div>
                 <p id="rule-instruction-hint">Get ready...</p>
-                <button id="btn-ready" class="hidden">Press Space or Click to Begin Trial</button>
+                <button id="btn-ready" class="hidden primary">Press Space or Click to Begin</button>
             </div>
 
+            <!-- Training Screen -->
             <div class="screen hidden" id="training-container">
                 <div class="trial-counter" id="game-trial-counter">Trial 1</div>
                 <div class="cue-text" id="cue-display">Rule: Meaning</div>
@@ -544,24 +752,27 @@
                     <div class="stimulus-box" id="stimulus-right">IV</div>
                 </div>
                 <div class="action-buttons">
-                    <button id="btn-same">Same (<span id="lbl-key-same">S</span>)</button>
+                    <button class="primary" id="btn-same">Same (<span id="lbl-key-same">S</span>)</button>
                     <button id="btn-diff">Different (<span id="lbl-key-diff">D</span>)</button>
                 </div>
             </div>
+
         </div>
     </main>
 
+    <!-- Summary Modal -->
     <div class="modal-overlay hidden" id="summary-modal">
         <div class="modal-content" id="summary-modal-content">
-            <h1>Session Complete!</h1>
-            <p id="summary-stats-text">Great execution on high-speed semantic retrieval.</p>
-            <button class="primary" id="btn-modal-close">Return to Dashboard</button>
+            <h1 style="color: #ffffff;">Session Complete!</h1>
+            <p id="summary-stats-text" style="color: var(--text-muted); font-size: 1.05rem; line-height: 1.6;"></p>
+            <button class="primary" id="btn-modal-close" style="padding: 0.85rem; font-size: 1rem;">Return to Dashboard</button>
         </div>
     </div>
 
+    <!-- Settings Overlay Panel -->
     <div class="overlay-panel" id="settings-panel">
         <div class="panel-header">
-            <h3>Tool Settings</h3>
+            <h3 style="font-size: 1.1rem; font-weight: 800; letter-spacing: 0.05em;">TOOL SETTINGS</h3>
             <button id="btn-close-settings">Close</button>
         </div>
         <div class="panel-content">
@@ -573,7 +784,7 @@
                     <option value="time">Continuous Time</option>
                 </select>
                 
-                <div id="time-input-controls" class="hidden" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                <div id="time-input-controls" class="hidden" style="margin-top: 0.75rem; border-top: 1px solid var(--border); padding-top: 0.75rem;">
                     <div class="setting-inline-group" style="justify-content: space-between;">
                         <span>Duration (Minutes):</span>
                         <input type="number" id="setting-session-minutes" min="1" max="120" value="15">
@@ -589,7 +800,7 @@
                     <option value="manual">Manual (Fixed Level)</option>
                 </select>
                 
-                <div id="adaptive-controls" class="hidden" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                <div id="adaptive-controls" class="hidden" style="margin-top: 0.75rem; border-top: 1px solid var(--border); padding-top: 0.75rem;">
                     <label>Adaptive Settings (PASAT)</label>
                     <div class="setting-inline-group" style="margin-top:0.5rem; justify-content: space-between;">
                         <span>Consecutive Wins to Level Up:</span>
@@ -604,27 +815,27 @@
 
             <div class="setting-card">
                 <label>Task Modes</label>
-                <div class="checkbox-row" style="margin-top: 0.5rem;">
+                <div class="checkbox-row" style="margin-top: 0.4rem;">
                     <input type="checkbox" id="setting-classic-mode" checked>
-                    <span>Classic Mode (Includes Physical Rule Match)</span>
+                    <span>Classic Mode (Numbers & Letter Identity)</span>
                 </div>
-                <div class="checkbox-row" style="margin-top: 0.5rem;">
+                <div class="checkbox-row" style="margin-top: 0.4rem;">
                     <input type="checkbox" id="setting-multi-mode" checked>
-                    <span>Multi Mode (Includes Category Rule Match)</span>
+                    <span>Multi Mode (Includes Category, Cross Sum & Modulo)</span>
                 </div>
             </div>
 
             <div class="setting-card">
                 <label>Advanced Modifiers</label>
-                <div class="checkbox-row" style="margin-top: 0.5rem;">
+                <div class="checkbox-row" style="margin-top: 0.4rem;">
                     <input type="checkbox" id="setting-ufoiv">
                     <span>Peripheral Saccades / UFOV (Random positions)</span>
                 </div>
-                <div class="checkbox-row" style="margin-top: 0.5rem;">
+                <div class="checkbox-row" style="margin-top: 0.4rem;">
                     <input type="checkbox" id="setting-inversion">
                     <span>Rule Inversion (Go/No-Go Red stimulus toggle)</span>
                 </div>
-                <div class="checkbox-row" style="margin-top: 0.5rem;">
+                <div class="checkbox-row" style="margin-top: 0.4rem;">
                     <input type="checkbox" id="setting-sound" checked>
                     <span>Error Buzzer & Audio Feedback</span>
                 </div>
@@ -637,11 +848,11 @@
 
             <div class="setting-card">
                 <label>Keybindings Customization</label>
-                <div class="keybind-row" style="margin-top: 0.5rem;">
+                <div class="keybind-row" style="margin-top: 0.4rem;">
                     <span>Same Action</span>
                     <button class="key-capture-btn" id="bind-same" data-action="same">S</button>
                 </div>
-                <div class="keybind-row" style="margin-top: 0.5rem;">
+                <div class="keybind-row" style="margin-top: 0.4rem;">
                     <span>Different Action</span>
                     <button class="key-capture-btn" id="bind-diff" data-action="diff">D</button>
                 </div>
@@ -649,12 +860,19 @@
         </div>
     </div>
 
+    <!-- Credit Footer -->
+    <footer class="credit">
+        Engineered by TURPENSTEIN
+    </footer>
+
     <script>
-        const ALL_LEVELS = [1, 2, 3, 4, 5, 6, 7, 7.5, 8, 8.5, 9, 10, 11, 12, 13];
+        // Extended levels list up to level 20 to support unbounded progression
+        const ALL_LEVELS = [1, 2, 3, 4, 5, 6, 7, 7.5, 8, 8.5, 9, 9.5, 10, 10.5, 11, 11.5, 12, 12.5, 13, 14, 15, 16, 17, 18, 19, 20];
 
         const state = {
             level: 1,
             maxLevelReached: 1,
+            sessionPeakLevel: 1,
             correctCount: 0,
             totalCount: 0,
             consecutiveCorrect: 0,
@@ -679,7 +897,8 @@
                 totalSessions: 0,
                 totalTrials: 0,
                 totalCorrect: 0,
-                dailyLogs: {} 
+                dailyLogs: {},
+                history: []
             },
             settings: {
                 sessionMode: 'trials',
@@ -713,8 +932,8 @@
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.type = success ? 'sine' : 'sawtooth';
-                osc.frequency.setValueAtTime(success ? 600 : 180, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(success ? 620 : 160, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
@@ -740,6 +959,7 @@
         const btnPause = document.getElementById('btn-pause');
         const btnResume = document.getElementById('btn-resume');
         const btnAbortSession = document.getElementById('btn-abort-session');
+        const btnClearHistory = document.getElementById('btn-clear-history');
         
         const settingsBtn = document.getElementById('btn-settings');
         const closeSettingsBtn = document.getElementById('btn-close-settings');
@@ -784,12 +1004,14 @@
         const statTrial = document.getElementById('stat-trial');
         const statDailySessions = document.getElementById('stat-daily-sessions');
         const timerContainer = document.getElementById('timer-container');
+        const timerText = document.getElementById('timer-text');
         const summaryStatsText = document.getElementById('summary-stats-text');
 
         const dashSessions = document.getElementById('dash-sessions');
         const dashDailySessions = document.getElementById('dash-daily-sessions');
         const dashAccuracy = document.getElementById('dash-accuracy');
         const dashLevel = document.getElementById('dash-level');
+        const historyTableBody = document.getElementById('history-table-body');
 
         function getTodayKey() {
             const d = new Date();
@@ -805,6 +1027,7 @@
                 btn.addEventListener('click', () => {
                     if (state.settings.progressionMode === 'manual') state.settings.fixedLevel = lvl;
                     state.level = lvl;
+                    if (state.level > state.maxLevelReached) state.maxLevelReached = state.level;
                     statLevel.textContent = lvl;
                     saveStorage();
                     buildLevelGrid();
@@ -830,7 +1053,7 @@
         }
 
         function loadStorage() {
-            const saved = localStorage.getItem('sem_ltmr_settings_v3');
+            const saved = localStorage.getItem('mb_sem_ltmr_settings_v4');
             if (saved) {
                 const parsed = JSON.parse(saved);
                 state.settings = { ...state.settings, ...parsed };
@@ -846,9 +1069,10 @@
                 settingInversion.checked = state.settings.inversion;
                 settingSound.checked = state.settings.soundEnabled;
             }
-            const savedStats = localStorage.getItem('sem_ltmr_stats_v3');
+            const savedStats = localStorage.getItem('mb_sem_ltmr_stats_v4');
             if (savedStats) state.lifetimeStats = JSON.parse(savedStats);
-            const savedMax = localStorage.getItem('sem_ltmr_maxlevel_v3');
+            
+            const savedMax = localStorage.getItem('mb_sem_ltmr_maxlevel_v4');
             if (savedMax) state.maxLevelReached = parseFloat(savedMax) || 1;
 
             if (state.settings.progressionMode === 'manual') state.level = state.settings.fixedLevel || 1;
@@ -861,19 +1085,56 @@
         }
 
         function saveStorage() {
-            localStorage.setItem('sem_ltmr_settings_v3', JSON.stringify(state.settings));
-            localStorage.setItem('sem_ltmr_stats_v3', JSON.stringify(state.lifetimeStats));
-            localStorage.setItem('sem_ltmr_maxlevel_v3', state.maxLevelReached.toString());
+            localStorage.setItem('mb_sem_ltmr_settings_v4', JSON.stringify(state.settings));
+            localStorage.setItem('mb_sem_ltmr_stats_v4', JSON.stringify(state.lifetimeStats));
+            localStorage.setItem('mb_sem_ltmr_maxlevel_v4', state.maxLevelReached.toString());
         }
 
         function updateDashboardDisplay() {
-            dashSessions.textContent = state.lifetimeStats.totalSessions;
+            dashSessions.textContent = state.lifetimeStats.totalSessions || 0;
             dashDailySessions.textContent = state.lifetimeStats.dailyLogs[getTodayKey()] || 0;
             statDailySessions.textContent = dashDailySessions.textContent;
-            const lifetimeAcc = state.lifetimeStats.totalTrials > 0 ? Math.round((state.lifetimeStats.totalCorrect / state.lifetimeStats.totalTrials) * 100) : 0;
+            
+            const lifetimeAcc = state.lifetimeStats.totalTrials > 0 
+                ? Math.round((state.lifetimeStats.totalCorrect / state.lifetimeStats.totalTrials) * 100) 
+                : 0;
             dashAccuracy.textContent = `${lifetimeAcc}%`;
             dashLevel.textContent = state.maxLevelReached;
+
+            // Render History Table
+            renderHistoryTable();
         }
+
+        function renderHistoryTable() {
+            historyTableBody.innerHTML = '';
+            const history = state.lifetimeStats.history || [];
+            if (history.length === 0) {
+                historyTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-muted);">No sessions logged yet.</td></tr>';
+                return;
+            }
+
+            // Display latest 25 sessions
+            const items = [...history].reverse().slice(0, 25);
+            items.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.dateStr || '—'}</td>
+                    <td><span style="color:var(--accent); font-weight:700;">${item.mode.toUpperCase()}</span></td>
+                    <td>${item.trials}</td>
+                    <td><strong style="color:${item.accuracy >= 85 ? 'var(--success)' : 'var(--text-main)'}">${item.accuracy}%</strong></td>
+                    <td><span style="color:#f87171; font-weight:800;">Lvl ${item.peakLevel}</span></td>
+                `;
+                historyTableBody.appendChild(tr);
+            });
+        }
+
+        btnClearHistory.addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear your session history?')) {
+                state.lifetimeStats.history = [];
+                saveStorage();
+                updateDashboardDisplay();
+            }
+        });
 
         function updateKeybindLabels() {
             lblKeySame.textContent = state.settings.sameKeyLabel;
@@ -1014,6 +1275,7 @@
         settingMultiMode.addEventListener('change', (e) => { state.settings.multiMode = e.target.checked; saveStorage(); });
         settingUfoiv.addEventListener('change', (e) => { state.settings.ufoiv = e.target.checked; saveStorage(); });
         settingInversion.addEventListener('change', (e) => { state.settings.inversion = e.target.checked; saveStorage(); });
+        settingSound.addEventListener('change', (e) => { state.settings.soundEnabled = e.target.checked; saveStorage(); });
 
         function showDashboard() {
             clearTimers();
@@ -1059,6 +1321,11 @@
             state.isPaused = false;
             
             if (state.settings.progressionMode === 'manual') state.level = state.settings.fixedLevel;
+            
+            // Track session peak level cleanly
+            state.sessionPeakLevel = state.level;
+            if (state.level > state.maxLevelReached) state.maxLevelReached = state.level;
+            
             statLevel.textContent = state.level;
             
             welcomeScreen.classList.add('hidden');
@@ -1067,12 +1334,12 @@
             if (state.settings.sessionMode === 'time') {
                 timerContainer.classList.remove('hidden');
                 const timeLimitSeconds = state.settings.sessionMinutes * 60;
-                timerContainer.textContent = formatTime(timeLimitSeconds);
+                timerText.textContent = formatTime(timeLimitSeconds);
                 state.globalTimerInterval = setInterval(() => {
                     if (!state.isPaused) {
                         state.timeElapsedSeconds++;
                         const remaining = timeLimitSeconds - state.timeElapsedSeconds;
-                        timerContainer.textContent = formatTime(remaining);
+                        timerText.textContent = formatTime(remaining);
                         
                         if (remaining <= 0) {
                             clearInterval(state.globalTimerInterval);
@@ -1117,7 +1384,7 @@
                 ruleLabel += " [INVERTED GO/NO-GO]";
                 ruleCueBox.style.color = 'var(--danger)';
             } else {
-                ruleCueBox.style.color = 'var(--accent)';
+                ruleCueBox.style.color = '#f87171';
             }
             ruleCueBox.textContent = `Rule: ${ruleLabel}`;
 
@@ -1148,8 +1415,8 @@
 
             if (state.settings.ufoiv) {
                 stimulusLeft.style.position = 'absolute'; stimulusRight.style.position = 'absolute';
-                stimulusLeft.style.left = `${Math.floor(Math.random() * 40) + 5}%`;
-                stimulusRight.style.left = `${Math.floor(Math.random() * 40) + 55}%`;
+                stimulusLeft.style.left = `${Math.floor(Math.random() * 35) + 5}%`;
+                stimulusRight.style.left = `${Math.floor(Math.random() * 35) + 55}%`;
                 const topPos = Math.floor(Math.random() * 40) - 20;
                 stimulusLeft.style.top = `${topPos}px`; stimulusRight.style.top = `${topPos}px`;
             } else {
@@ -1162,8 +1429,8 @@
                 stimulusLeft.classList.remove('inverted-rule'); stimulusRight.classList.remove('inverted-rule');
             }
 
-            const baseTime = 1300 - (state.level * 100);
-            state.trialTotalTime = Math.max(50, Math.round(baseTime));
+            const baseTime = 1300 - (state.level * 80);
+            state.trialTotalTime = Math.max(120, Math.round(baseTime));
             state.trialStartTime = Date.now();
             
             state.trialTimeout = setTimeout(() => {
@@ -1171,23 +1438,26 @@
             }, state.trialTotalTime);
         }
 
+        // Helper for Cross Sum calculation
+        function getCrossSum(num) {
+            return num.toString().split('').reduce((sum, d) => sum + parseInt(d, 10), 0);
+        }
+
         function generateTrialContent() {
             let rules = [];
             
-            // Classic Mode: strictly numbers/letters
             if (state.settings.classicMode) {
                 rules.push('meaning', 'physical');
             }
             
-            // Multi Mode: mixes numbers with all the new semantic categories
             if (state.settings.multiMode) {
                 rules.push(
                     'meaning', 'physical', 'category', 'part-whole', 
-                    'functional', 'color-property', 'antonyms', 'action-object'
+                    'functional', 'color-property', 'antonyms', 'action-object',
+                    'cross-sum', 'modulo'
                 );
             }
             
-            // Remove duplicates in case both boxes are checked, and provide a fallback
             let activeRules = [...new Set(rules)];
             if (activeRules.length === 0) activeRules.push('meaning');
 
@@ -1276,6 +1546,68 @@
                 let pair = pairs[Math.floor(Math.random() * pairs.length)];
                 state.currentTrialData.left = pair[0];
                 state.currentTrialData.right = isSame ? pair[1] : pairs[(pairs.indexOf(pair) + 1) % pairs.length][1];
+
+            } else if (selectedRule === 'cross-sum') {
+                // Cross Sum Task Mode
+                let n1 = Math.floor(Math.random() * 88) + 11;
+                let cs1 = getCrossSum(n1);
+                let n2;
+
+                if (isSame) {
+                    if (Math.random() > 0.4) {
+                        let matches = [];
+                        for (let i = 11; i <= 99; i++) {
+                            if (i !== n1 && getCrossSum(i) === cs1) matches.push(i);
+                        }
+                        n2 = matches.length > 0 ? matches[Math.floor(Math.random() * matches.length)] : cs1;
+                    } else {
+                        n2 = cs1;
+                    }
+                } else {
+                    let n2Candidate = Math.floor(Math.random() * 88) + 11;
+                    while (getCrossSum(n2Candidate) === cs1) {
+                        n2Candidate = Math.floor(Math.random() * 88) + 11;
+                    }
+                    n2 = n2Candidate;
+                }
+
+                state.currentTrialData.left = n1.toString();
+                state.currentTrialData.right = n2.toString();
+
+            } else if (selectedRule === 'modulo') {
+                // Modulo Task Mode
+                let divisor = Math.floor(Math.random() * 4) + 3; // 3, 4, 5, 6
+                let rem = Math.floor(Math.random() * divisor);
+                let mult = Math.floor(Math.random() * 6) + 2;
+                let dividend = mult * divisor + rem;
+
+                let leftExpr = `${dividend} % ${divisor}`;
+                let rightExpr;
+
+                if (isSame) {
+                    if (Math.random() > 0.5) {
+                        let d2 = Math.floor(Math.random() * 4) + 3;
+                        let m2 = Math.floor(Math.random() * 6) + 2;
+                        let div2 = m2 * d2 + rem;
+                        rightExpr = `${div2} % ${d2}`;
+                    } else {
+                        const words = ['ZERO', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE'];
+                        rightExpr = (rem < words.length && Math.random() > 0.5) ? words[rem] : rem.toString();
+                    }
+                } else {
+                    let diffRem = (rem + Math.floor(Math.random() * (divisor - 1)) + 1) % divisor;
+                    if (Math.random() > 0.5) {
+                        let d2 = Math.floor(Math.random() * 4) + 3;
+                        let m2 = Math.floor(Math.random() * 6) + 2;
+                        let div2 = m2 * d2 + diffRem;
+                        rightExpr = `${div2} % ${d2}`;
+                    } else {
+                        rightExpr = diffRem.toString();
+                    }
+                }
+
+                state.currentTrialData.left = leftExpr;
+                state.currentTrialData.right = rightExpr;
             }
         }
 
@@ -1283,16 +1615,32 @@
             const overlay = document.getElementById('flash-overlay');
             const className = isCorrect ? 'flash-correct' : 'flash-wrong';
             overlay.classList.add(className);
-            setTimeout(() => overlay.classList.remove(className), 300);
+            setTimeout(() => overlay.classList.remove(className), 280);
         }
 
         function handleLevelChange(direction) {
             let idx = ALL_LEVELS.indexOf(state.level);
-            if (direction === 'up' && idx < ALL_LEVELS.length - 1) {
-                state.level = ALL_LEVELS[idx + 1];
-            } else if (direction === 'down' && idx > 0) {
-                state.level = ALL_LEVELS[idx - 1];
+            if (idx === -1) idx = 0;
+
+            if (direction === 'up') {
+                if (idx < ALL_LEVELS.length - 1) {
+                    state.level = ALL_LEVELS[idx + 1];
+                } else {
+                    state.level += 1;
+                }
+            } else if (direction === 'down') {
+                if (idx > 0) {
+                    state.level = ALL_LEVELS[idx - 1];
+                }
             }
+
+            // Continuously track peak levels
+            if (state.level > state.sessionPeakLevel) state.sessionPeakLevel = state.level;
+            if (state.level > state.maxLevelReached) {
+                state.maxLevelReached = state.level;
+                saveStorage();
+            }
+
             statLevel.textContent = state.level;
         }
 
@@ -1337,7 +1685,7 @@
                 }
             }
 
-            state.transitionTimeout = setTimeout(() => nextTrial(), 550);
+            state.transitionTimeout = setTimeout(() => nextTrial(), 520);
         }
 
         sameBtn.addEventListener('click', () => handleUserChoice(true));
@@ -1353,7 +1701,7 @@
             pauseScreen.classList.add('hidden');
 
             const errors = state.totalCount - state.correctCount;
-            let levelMessage = `Current Level: <strong>${state.level}</strong>`;
+            let levelMessage = `Ending Level: <strong>${state.level}</strong>`;
 
             if (state.settings.progressionMode === 'normal') {
                 const acc = state.totalCount > 0 ? (state.correctCount / state.totalCount) : 0;
@@ -1361,22 +1709,39 @@
                     let oldLevel = state.level;
                     handleLevelChange('up');
                     if (state.level > oldLevel) {
-                        levelMessage = `Current Level: <strong>${state.level}</strong> <span style="color:var(--success); font-weight:bold;">(Level Up!)</span>`;
+                        levelMessage = `Ending Level: <strong>${state.level}</strong> <span style="color:var(--success); font-weight:bold;">(Level Up!)</span>`;
                     }
                 }
             }
 
-            if (state.level > state.maxLevelReached) state.maxLevelReached = state.level;
+            // Double check peak levels
+            if (state.level > state.sessionPeakLevel) state.sessionPeakLevel = state.level;
+            if (state.sessionPeakLevel > state.maxLevelReached) state.maxLevelReached = state.sessionPeakLevel;
+
+            const finalAcc = state.totalCount > 0 ? Math.round((state.correctCount / state.totalCount) * 100) : 0;
             
+            // Store Session Log in History
+            if (!state.lifetimeStats.history) state.lifetimeStats.history = [];
+            const d = new Date();
+            const dateStr = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+            
+            state.lifetimeStats.history.push({
+                dateStr: dateStr,
+                mode: state.settings.sessionMode,
+                trials: state.totalCount,
+                accuracy: finalAcc,
+                peakLevel: state.sessionPeakLevel
+            });
+
             state.lifetimeStats.totalSessions++;
             state.lifetimeStats.totalTrials += state.totalCount;
             state.lifetimeStats.totalCorrect += state.correctCount;
+            
             const today = getTodayKey();
             state.lifetimeStats.dailyLogs[today] = (state.lifetimeStats.dailyLogs[today] || 0) + 1;
             saveStorage();
 
-            const finalAcc = state.totalCount > 0 ? Math.round((state.correctCount / state.totalCount) * 100) : 0;
-            summaryStatsText.innerHTML = `Session complete!<br><br>Accuracy: <strong>${finalAcc}%</strong> (${errors} errors across ${state.totalCount} trials)<br>${levelMessage}<br>Max Level Reached: <strong>${state.maxLevelReached}</strong>`;
+            summaryStatsText.innerHTML = `Great execution on high-speed semantic retrieval.<br><br>Accuracy: <strong>${finalAcc}%</strong> (${errors} errors across ${state.totalCount} trials)<br>${levelMessage}<br>Peak Level Achieved: <strong style="color:#f87171;">${state.sessionPeakLevel}</strong><br>Lifetime Highest Peak: <strong style="color:var(--accent);">${state.maxLevelReached}</strong>`;
             summaryModal.classList.remove('hidden');
         }
 
