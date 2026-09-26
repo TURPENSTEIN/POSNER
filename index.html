@@ -512,6 +512,31 @@
             cursor: pointer;
         }
 
+        .multimode-sub-options {
+            margin-top: 0.5rem;
+            margin-left: 1.75rem;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            background: var(--surface-color);
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .multimode-sub-options .sub-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.15rem;
+        }
+
+        .multimode-sub-options .checkbox-row {
+            font-size: 0.85rem;
+        }
+
         .level-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -823,6 +848,19 @@
                     <input type="checkbox" id="setting-multi-mode" checked>
                     <span>Multi Mode (Includes Category, Cross Sum & Modulo)</span>
                 </div>
+                <div class="multimode-sub-options" id="multimode-task-options">
+                    <div class="sub-label">Multi Mode tasks included:</div>
+                    <label class="checkbox-row"><input type="checkbox" data-multitask="meaning" checked> <span>Meaning</span></label>
+                    <label class="checkbox-row"><input type="checkbox" data-multitask="physical" checked> <span>Physical</span></label>
+                    <label class="checkbox-row"><input type="checkbox" data-multitask="category" checked> <span>Category</span></label>
+                    <label class="checkbox-row"><input type="checkbox" data-multitask="part-whole" checked> <span>Part-Whole</span></label>
+                    <label class="checkbox-row"><input type="checkbox" data-multitask="functional" checked> <span>Functional</span></label>
+                    <label class="checkbox-row"><input type="checkbox" data-multitask="color-property" checked> <span>Color Property</span></label>
+                    <label class="checkbox-row"><input type="checkbox" data-multitask="antonyms" checked> <span>Antonyms</span></label>
+                    <label class="checkbox-row"><input type="checkbox" data-multitask="action-object" checked> <span>Action-Object</span></label>
+                    <label class="checkbox-row"><input type="checkbox" data-multitask="cross-sum" checked> <span>Cross Sum</span></label>
+                    <label class="checkbox-row"><input type="checkbox" data-multitask="modulo" checked> <span>Modulo</span></label>
+                </div>
             </div>
 
             <div class="setting-card">
@@ -869,6 +907,19 @@
         // Extended levels list up to level 20 to support unbounded progression
         const ALL_LEVELS = [1, 2, 3, 4, 5, 6, 7, 7.5, 8, 8.5, 9, 9.5, 10, 10.5, 11, 11.5, 12, 12.5, 13, 14, 15, 16, 17, 18, 19, 20];
 
+        const DEFAULT_MULTI_TASKS = {
+            'meaning': true,
+            'physical': true,
+            'category': true,
+            'part-whole': true,
+            'functional': true,
+            'color-property': true,
+            'antonyms': true,
+            'action-object': true,
+            'cross-sum': true,
+            'modulo': true
+        };
+
         const state = {
             level: 1,
             maxLevelReached: 1,
@@ -908,6 +959,18 @@
                 adaptiveDownThreshold: 3,
                 classicMode: true,
                 multiMode: true,
+                multiTasks: {
+                    'meaning': true,
+                    'physical': true,
+                    'category': true,
+                    'part-whole': true,
+                    'functional': true,
+                    'color-property': true,
+                    'antonyms': true,
+                    'action-object': true,
+                    'cross-sum': true,
+                    'modulo': true
+                },
                 ufoiv: false,
                 inversion: false,
                 soundEnabled: true,
@@ -994,6 +1057,7 @@
 
         const settingClassicMode = document.getElementById('setting-classic-mode');
         const settingMultiMode = document.getElementById('setting-multi-mode');
+        const multimodeTaskOptions = document.getElementById('multimode-task-options');
         const settingUfoiv = document.getElementById('setting-ufoiv');
         const settingInversion = document.getElementById('setting-inversion');
         const settingSound = document.getElementById('setting-sound');
@@ -1052,11 +1116,33 @@
             }
         }
 
+        function syncMultimodeTaskCheckboxes() {
+            document.querySelectorAll('#multimode-task-options input[data-multitask]').forEach(cb => {
+                const key = cb.getAttribute('data-multitask');
+                cb.checked = state.settings.multiTasks ? state.settings.multiTasks[key] !== false : true;
+            });
+        }
+
+        function toggleMultimodeTaskOptions() {
+            if (!multimodeTaskOptions) return;
+            if (state.settings.multiMode) {
+                multimodeTaskOptions.classList.remove('hidden');
+            } else {
+                multimodeTaskOptions.classList.add('hidden');
+            }
+        }
+
         function loadStorage() {
             const saved = localStorage.getItem('mb_sem_ltmr_settings_v4');
             if (saved) {
                 const parsed = JSON.parse(saved);
                 state.settings = { ...state.settings, ...parsed };
+                if (parsed.multiTasks) {
+                    state.settings.multiTasks = { ...DEFAULT_MULTI_TASKS, ...parsed.multiTasks };
+                }
+                if (!state.settings.multiTasks) {
+                    state.settings.multiTasks = { ...DEFAULT_MULTI_TASKS };
+                }
                 updateKeybindLabels();
                 settingSessionMode.value = state.settings.sessionMode || 'trials';
                 settingSessionMinutes.value = state.settings.sessionMinutes || 15;
@@ -1068,6 +1154,7 @@
                 settingUfoiv.checked = state.settings.ufoiv;
                 settingInversion.checked = state.settings.inversion;
                 settingSound.checked = state.settings.soundEnabled;
+                syncMultimodeTaskCheckboxes();
             }
             const savedStats = localStorage.getItem('mb_sem_ltmr_stats_v4');
             if (savedStats) state.lifetimeStats = JSON.parse(savedStats);
@@ -1076,9 +1163,12 @@
             if (savedMax) state.maxLevelReached = parseFloat(savedMax) || 1;
 
             if (state.settings.progressionMode === 'manual') state.level = state.settings.fixedLevel || 1;
+            if (!state.settings.multiTasks) state.settings.multiTasks = { ...DEFAULT_MULTI_TASKS };
             
             toggleAdaptiveControls();
             toggleTimeControls();
+            syncMultimodeTaskCheckboxes();
+            toggleMultimodeTaskOptions();
             statLevel.textContent = state.level;
             updateDashboardDisplay();
             buildLevelGrid();
@@ -1272,7 +1362,15 @@
         settingAdaptiveDown.addEventListener('input', (e) => { state.settings.adaptiveDownThreshold = parseInt(e.target.value) || 3; saveStorage(); });
 
         settingClassicMode.addEventListener('change', (e) => { state.settings.classicMode = e.target.checked; saveStorage(); });
-        settingMultiMode.addEventListener('change', (e) => { state.settings.multiMode = e.target.checked; saveStorage(); });
+        settingMultiMode.addEventListener('change', (e) => { state.settings.multiMode = e.target.checked; toggleMultimodeTaskOptions(); saveStorage(); });
+        document.querySelectorAll('#multimode-task-options input[data-multitask]').forEach(cb => {
+            cb.addEventListener('change', (e) => {
+                const key = e.target.getAttribute('data-multitask');
+                if (!state.settings.multiTasks) state.settings.multiTasks = { ...DEFAULT_MULTI_TASKS };
+                state.settings.multiTasks[key] = e.target.checked;
+                saveStorage();
+            });
+        });
         settingUfoiv.addEventListener('change', (e) => { state.settings.ufoiv = e.target.checked; saveStorage(); });
         settingInversion.addEventListener('change', (e) => { state.settings.inversion = e.target.checked; saveStorage(); });
         settingSound.addEventListener('change', (e) => { state.settings.soundEnabled = e.target.checked; saveStorage(); });
@@ -1451,11 +1549,15 @@
             }
             
             if (state.settings.multiMode) {
-                rules.push(
-                    'meaning', 'physical', 'category', 'part-whole', 
+                const allMultiRules = [
+                    'meaning', 'physical', 'category', 'part-whole',
                     'functional', 'color-property', 'antonyms', 'action-object',
                     'cross-sum', 'modulo'
-                );
+                ];
+                const enabled = state.settings.multiTasks || DEFAULT_MULTI_TASKS;
+                allMultiRules.forEach(r => {
+                    if (enabled[r] !== false) rules.push(r);
+                });
             }
             
             let activeRules = [...new Set(rules)];
