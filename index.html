@@ -860,6 +860,8 @@
                     <label class="checkbox-row"><input type="checkbox" data-multitask="action-object" checked> <span>Action-Object</span></label>
                     <label class="checkbox-row"><input type="checkbox" data-multitask="cross-sum" checked> <span>Cross Sum</span></label>
                     <label class="checkbox-row"><input type="checkbox" data-multitask="modulo" checked> <span>Modulo</span></label>
+                    <label class="checkbox-row"><input type="checkbox" data-multitask="odd-even" checked> <span>Odd / Even</span></label>
+                    <label class="checkbox-row"><input type="checkbox" data-multitask="prime" checked> <span>Prime</span></label>
                 </div>
             </div>
 
@@ -917,7 +919,9 @@
             'antonyms': true,
             'action-object': true,
             'cross-sum': true,
-            'modulo': true
+            'modulo': true,
+            'odd-even': true,
+            'prime': true
         };
 
         const state = {
@@ -969,7 +973,9 @@
                     'antonyms': true,
                     'action-object': true,
                     'cross-sum': true,
-                    'modulo': true
+                    'modulo': true,
+                    'odd-even': true,
+                    'prime': true
                 },
                 ufoiv: false,
                 inversion: false,
@@ -1537,6 +1543,14 @@
         }
 
         // Helper for Cross Sum calculation
+        function isPrime(num) {
+            if (num < 2) return false;
+            for (let d = 2; d * d <= num; d++) {
+                if (num % d === 0) return false;
+            }
+            return true;
+        }
+
         function getCrossSum(num) {
             return num.toString().split('').reduce((sum, d) => sum + parseInt(d, 10), 0);
         }
@@ -1552,7 +1566,7 @@
                 const allMultiRules = [
                     'meaning', 'physical', 'category', 'part-whole',
                     'functional', 'color-property', 'antonyms', 'action-object',
-                    'cross-sum', 'modulo'
+                    'cross-sum', 'modulo', 'odd-even', 'prime'
                 ];
                 const enabled = state.settings.multiTasks || DEFAULT_MULTI_TASKS;
                 allMultiRules.forEach(r => {
@@ -1710,6 +1724,36 @@
 
                 state.currentTrialData.left = leftExpr;
                 state.currentTrialData.right = rightExpr;
+            } else if (selectedRule === 'odd-even') {
+                let n1 = Math.floor(Math.random() * 89) + 11;
+                let p1 = n1 % 2;
+                let n2;
+                if (isSame) {
+                    do {
+                        n2 = Math.floor(Math.random() * 89) + 11;
+                    } while (n2 === n1 || (n2 % 2) !== p1);
+                } else {
+                    do {
+                        n2 = Math.floor(Math.random() * 89) + 11;
+                    } while ((n2 % 2) === p1);
+                }
+                state.currentTrialData.left = n1.toString();
+                state.currentTrialData.right = n2.toString();
+            } else if (selectedRule === 'prime') {
+                let n1 = Math.floor(Math.random() * 89) + 11;
+                let prime1 = isPrime(n1);
+                let n2;
+                if (isSame) {
+                    do {
+                        n2 = Math.floor(Math.random() * 89) + 11;
+                    } while (n2 === n1 || isPrime(n2) !== prime1);
+                } else {
+                    do {
+                        n2 = Math.floor(Math.random() * 89) + 11;
+                    } while (isPrime(n2) === prime1);
+                }
+                state.currentTrialData.left = n1.toString();
+                state.currentTrialData.right = n2.toString();
             }
         }
 
