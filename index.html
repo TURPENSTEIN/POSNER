@@ -640,6 +640,123 @@
         .hidden {
             display: none !important;
         }
+
+        /* ============ RESPONSIVE / MOBILE FIX ============ */
+        img { max-width: 100%; }
+
+        @media (max-width: 1020px) {
+            header {
+                flex-wrap: wrap;
+                gap: 0.75rem;
+                padding: 0.75rem 1rem;
+                row-gap: 0.65rem;
+            }
+            .stats-bar {
+                order: 3;
+                width: 100%;
+                justify-content: flex-start;
+                overflow-x: auto;
+                gap: 0.5rem;
+                padding-bottom: 0.15rem;
+                scrollbar-width: none;
+            }
+            .stats-bar::-webkit-scrollbar { display: none; }
+            .stat-item {
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+            .timer-display { flex-shrink: 0; white-space: nowrap; }
+            .nav-buttons {
+                margin-left: auto;
+                flex-wrap: wrap;
+                justify-content: flex-end;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .top-banner {
+                flex-wrap: wrap;
+                font-size: 0.72rem;
+                padding: 0.5rem 0.6rem;
+                line-height: 1.4;
+                text-align: center;
+            }
+            header {
+                padding: 0.65rem 0.75rem;
+                gap: 0.6rem;
+            }
+            .brand-logo-img { width: 28px; height: 28px; }
+            .logo-text { font-size: 0.95rem; }
+            .nav-buttons { gap: 0.4rem; width: 100%; margin-left: 0; justify-content: stretch; }
+            .nav-buttons button, .nav-buttons a { flex: 1 1 auto; }
+            .nav-buttons a { display: flex; }
+            .nav-buttons a button { width: 100%; }
+            button { padding: 0.55rem 0.8rem; font-size: 0.8rem; }
+
+            main { padding: 1rem 0.65rem 1.5rem 0.65rem; justify-content: flex-start; }
+            .stage {
+                padding: 1.4rem 1rem 1.5rem 1rem;
+                min-height: auto;
+                border-radius: 1rem;
+                max-width: 100%;
+            }
+            .logo { width: 104px; height: 104px; margin-bottom: 0.5rem; }
+            .screen { gap: 1rem; }
+            .screen h1 { font-size: 1.55rem; line-height: 1.15; }
+            .screen p { font-size: 0.9rem; line-height: 1.55; }
+
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.6rem;
+            }
+            .dash-card { padding: 0.85rem 0.8rem; }
+            .dash-card h3 { font-size: 0.68rem; }
+            .dash-card .stat-val { font-size: 1.5rem; }
+
+            .history-table-wrapper {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .history-table { min-width: 520px; font-size: 0.78rem; }
+            .history-table th, .history-table td { padding: 0.45rem 0.55rem; }
+
+            #btn-start-from-dash {
+                width: 100%;
+                padding: 0.95rem 1rem !important;
+                font-size: 0.98rem !important;
+                white-space: normal;
+                line-height: 1.35;
+            }
+
+            .cue-text { font-size: 1.05rem; margin-bottom: 1.25rem; text-align: center; }
+            #rule-cue-box { font-size: 1.35rem !important; line-height: 1.3; }
+            .stimulus-container { gap: 0.7rem; min-height: 96px; margin-bottom: 1.5rem; }
+            .stimulus-box {
+                font-size: 1.25rem;
+                padding: 0.9rem 0.5rem;
+                min-width: 0;
+                flex: 1 1 0;
+                word-break: break-word;
+                overflow-wrap: anywhere;
+            }
+            .action-buttons { flex-direction: column; gap: 0.6rem; max-width: 100%; }
+            .action-buttons button { padding: 0.95rem; font-size: 1rem; width: 100%; }
+
+            .overlay-panel {
+                width: 100vw;
+                max-width: 100vw;
+                right: -105vw;
+            }
+            .modal-content { padding: 1.5rem 1.15rem; width: calc(100% - 1.5rem); }
+            .level-grid { grid-template-columns: repeat(4, 1fr); }
+            .footer-subtext { text-align: center; line-height: 1.5; }
+        }
+
+        @media (max-width: 380px) {
+            .dashboard-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+            .screen h1 { font-size: 1.35rem; }
+            .stimulus-box { font-size: 1.05rem; }
+        }
     </style>
 </head>
 <body>
